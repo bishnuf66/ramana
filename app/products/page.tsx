@@ -16,33 +16,26 @@ interface DbProduct {
   description: string | null;
   price: number;
   discount_price: number | null;
-  cover_image: string;
-  gallery_images: { url: string; title: string }[] | null;
-  rating: number;
-  category: "flowers" | "accessories" | "fruits";
-  stock: number;
+  cover_image: string | null;
+  gallery_images: { url: string; title: string }[] | string[] | null;
+  rating: number | null;
+  category_id: string | null;
+  stock: number | null;
   created_at: string;
   updated_at: string;
+  image_url: string | null;
 }
 
 // Convert database product to frontend product format
 const convertDbProduct = (dbProduct: DbProduct): Product => ({
-  id: dbProduct.id,
-  name: dbProduct.title,
-  description: dbProduct.description || "",
-  price: dbProduct.price,
-  discountPrice: dbProduct.discount_price,
-  mainImage: dbProduct.cover_image,
-  images: dbProduct.gallery_images?.map((img) => img.url) || [],
-  category: {
-    name:
-      dbProduct.category.charAt(0).toUpperCase() + dbProduct.category.slice(1),
-    slug: dbProduct.category,
-  },
-  rating: dbProduct.rating,
-  inStock: dbProduct.stock > 0,
-  tags: [dbProduct.category],
-  createdAt: dbProduct.created_at,
+  ...dbProduct,
+  galleryImages: Array.isArray(dbProduct.gallery_images)
+    ? dbProduct.gallery_images.map((img: any) =>
+        typeof img === "string" ? img : img.url,
+      )
+    : [],
+  mainImage: dbProduct.cover_image || dbProduct.image_url || undefined,
+  shortDescription: dbProduct.description || undefined,
 });
 
 export default function ProductsPage() {
@@ -93,34 +86,34 @@ export default function ProductsPage() {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesSearch =
-          product.name.toLowerCase().includes(query) ||
-          product.description.toLowerCase().includes(query) ||
-          product.tags.some((tag) => tag.toLowerCase().includes(query));
+          product.title.toLowerCase().includes(query) ||
+          (product.description &&
+            product.description.toLowerCase().includes(query));
         if (!matchesSearch) return false;
       }
 
       // Category filter
-      if (filters.category && product.category.slug !== filters.category) {
+      if (filters.category_id && product.category_id !== filters.category_id) {
         return false;
       }
 
       // Price range filter
       if (filters.priceRange) {
         const [min, max] = filters.priceRange;
-        const price = product.discountPrice || product.price;
+        const price = product.discount_price || product.price;
         if (price < min || price > max) return false;
       }
 
       // Stock filter
       if (
         filters.inStock !== undefined &&
-        product.inStock !== filters.inStock
+        (product.stock || 0) > 0 !== filters.inStock
       ) {
         return false;
       }
 
       // Rating filter
-      if (filters.rating && product.rating < filters.rating) {
+      if (filters.rating && (product.rating || 0) < filters.rating) {
         return false;
       }
 
@@ -133,20 +126,20 @@ export default function ProductsPage() {
 
       switch (sort.field) {
         case "name":
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
+          aValue = a.title.toLowerCase();
+          bValue = b.title.toLowerCase();
           break;
         case "price":
-          aValue = a.discountPrice || a.price;
-          bValue = b.discountPrice || b.price;
+          aValue = a.discount_price || a.price;
+          bValue = b.discount_price || b.price;
           break;
         case "rating":
-          aValue = a.rating;
-          bValue = b.rating;
+          aValue = a.rating || 0;
+          bValue = b.rating || 0;
           break;
         case "createdAt":
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
+          aValue = new Date(a.created_at || "").getTime();
+          bValue = new Date(b.created_at || "").getTime();
           break;
         default:
           return 0;
@@ -164,15 +157,20 @@ export default function ProductsPage() {
 
   // Generate categories from products
   const categories = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(products.map((p) => p.category.slug)),
-    )
-      .map((slug) => {
-        const product = products.find((p) => p.category.slug === slug);
-        return product?.category || { name: "", slug: "" };
-      })
-      .filter((cat) => cat.name);
-    return uniqueCategories;
+    // Extract unique category_ids from products
+    const uniqueCategoryIds = Array.from(
+      new Set(products.map((p) => p.category_id).filter(Boolean)),
+    );
+
+    // For now, return empty category objects - in a real app, you'd fetch categories from the database
+    return uniqueCategoryIds.map((id) => ({
+      id: id!,
+      name: `Category ${id}`,
+      slug: `category-${id}`,
+      created_at: "",
+      updated_at: null,
+      picture: null,
+    }));
   }, [products]);
 
   if (loading) {

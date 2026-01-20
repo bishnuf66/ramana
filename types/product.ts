@@ -17,8 +17,12 @@ export interface Product extends Tables<"products"> {
   reviewCount?: number;
 }
 
+export interface ProductWithCategory extends Product {
+  category: Category;
+}
+
 export interface ProductFilters {
-  category?: string;
+  category_id?: string;
   priceRange?: [number, number];
   inStock?: boolean;
   rating?: number;

@@ -29,45 +29,26 @@ interface DbProduct {
   description: string | null;
   price: number;
   discount_price: number | null;
-  cover_image: string;
-  gallery_images: { url: string; title: string }[] | null;
-  rating: number;
-  category: "flowers" | "accessories" | "fruits";
-  stock: number;
+  cover_image: string | null;
+  gallery_images: { url: string; title: string }[] | string[] | null;
+  rating: number | null;
+  category_id: string | null;
+  stock: number | null;
   created_at: string;
   updated_at: string;
+  image_url: string | null;
 }
 
 // Convert database product to frontend product format
 const convertDbProduct = (dbProduct: DbProduct): Product => ({
-  id: dbProduct.id,
-  name: dbProduct.title,
-  slug: dbProduct.id, // Using ID as slug for now
-  description: dbProduct.description || "",
-  shortDescription: dbProduct.description
-    ? dbProduct.description.substring(0, 100) + "..."
-    : "",
-  price: dbProduct.price,
-  discountPrice: dbProduct.discount_price || undefined,
-  images: dbProduct.gallery_images?.map((img) => img.url) || [],
-  mainImage: dbProduct.cover_image,
-  category: {
-    id: 1, // Default ID
-    name:
-      dbProduct.category.charAt(0).toUpperCase() + dbProduct.category.slice(1),
-    slug: dbProduct.category,
-    description: `${dbProduct.category} products`,
-    image: dbProduct.cover_image,
-    productCount: 0,
-  },
-  tags: [dbProduct.category],
-  inStock: dbProduct.stock > 0,
-  stockQuantity: dbProduct.stock,
-  rating: dbProduct.rating,
-  reviewCount: 0, // Default value
-  features: [], // Default value
-  createdAt: dbProduct.created_at,
-  updatedAt: dbProduct.updated_at,
+  ...dbProduct,
+  galleryImages: Array.isArray(dbProduct.gallery_images)
+    ? dbProduct.gallery_images.map((img: any) =>
+        typeof img === "string" ? img : img.url,
+      )
+    : [],
+  mainImage: dbProduct.cover_image || dbProduct.image_url || undefined,
+  shortDescription: dbProduct.description || undefined,
 });
 
 export default function ProductPage() {
@@ -106,7 +87,7 @@ export default function ProductPage() {
         const { data: similarData, error: similarError } = await supabase
           .from("products")
           .select("*")
-          .eq("category", data.category)
+          .eq("category_id", data.category_id)
           .neq("id", data.id)
           .limit(4);
 
@@ -158,20 +139,20 @@ export default function ProductPage() {
     );
   }
 
-  const discountPercentage = product.discountPrice
+  const discountPercentage = product.discount_price
     ? Math.round(
-        ((product.price - product.discountPrice) / product.price) * 100,
+        ((product.price - product.discount_price) / product.price) * 100,
       )
     : 0;
 
   const handleAddToCart = () => {
     addToCart({
       id: product.id,
-      title: product.name,
-      price: product.discountPrice || product.price,
-      image: product.mainImage,
+      title: product.title,
+      price: product.discount_price || product.price,
+      image: product.mainImage || product.image_url || "/placeholder.jpg",
       quantity: quantity,
-      rating: product.rating,
+      rating: product.rating || 0,
     });
   };
 
@@ -199,8 +180,11 @@ export default function ProductPage() {
             {/* Main Image */}
             <div className="relative aspect-square rounded-lg overflow-hidden bg-white dark:bg-gray-800">
               <Image
-                src={product.images[selectedImageIndex]}
-                alt={product.name}
+                src={
+                  product.galleryImages?.[selectedImageIndex] ||
+                  "/placeholder.jpg"
+                }
+                alt={product.title}
                 fill
                 className="object-cover"
               />
@@ -209,7 +193,7 @@ export default function ProductPage() {
                   -{discountPercentage}% OFF
                 </div>
               )}
-              {!product.inStock && (
+              {!(product.stock && product.stock > 0) && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                   <span className="text-white text-xl font-bold">
                     Out of Stock
@@ -220,7 +204,7 @@ export default function ProductPage() {
 
             {/* Thumbnail Images */}
             <div className="flex gap-2 overflow-x-auto">
-              {product.images.map((image, index) => (
+              {product.galleryImages?.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
@@ -232,7 +216,7 @@ export default function ProductPage() {
                 >
                   <Image
                     src={image}
-                    alt={`${product.name} ${index + 1}`}
+                    alt={`${product.title} ${index + 1}`}
                     fill
                     className="object-cover"
                   />
@@ -250,13 +234,13 @@ export default function ProductPage() {
             {/* Category & Title */}
             <div>
               <Link
-                href={`/products?category=${product.category.slug}`}
+                href={`/products?category_id=${product.category_id}`}
                 className="text-green-600 dark:text-green-400 font-medium hover:underline"
               >
-                {product.category.name}
+                {product.category?.name || "Uncategorized"}
               </Link>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                {product.name}
+                {product.title}
               </h1>
             </div>
 
@@ -267,7 +251,7 @@ export default function ProductPage() {
                   <Star
                     key={i}
                     className={`w-5 h-5 ${
-                      i < Math.floor(product.rating)
+                      i < Math.floor(product.rating || 0)
                         ? "text-yellow-400 fill-current"
                         : "text-gray-300 dark:text-gray-600"
                     }`}
@@ -275,23 +259,24 @@ export default function ProductPage() {
                 ))}
               </div>
               <span className="text-gray-600 dark:text-gray-400">
-                {product.rating} ({product.reviewCount} reviews)
+                {(product.rating || 0).toFixed(1)} ({product.reviewCount || 0}{" "}
+                reviews)
               </span>
             </div>
 
             {/* Price */}
             <div className="flex items-center gap-4">
-              {product.discountPrice ? (
+              {product.discount_price ? (
                 <>
                   <span className="text-3xl font-bold text-green-600 dark:text-green-400">
-                    NPR {product.discountPrice.toLocaleString()}
+                    NPR {product.discount_price.toLocaleString()}
                   </span>
                   <span className="text-xl text-gray-500 line-through">
                     NPR {product.price.toLocaleString()}
                   </span>
                   <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded-full text-sm font-medium">
                     Save NPR{" "}
-                    {(product.price - product.discountPrice).toLocaleString()}
+                    {(product.price - product.discount_price).toLocaleString()}
                   </span>
                 </>
               ) : (
@@ -317,7 +302,7 @@ export default function ProductPage() {
                 Features
               </h3>
               <ul className="space-y-2">
-                {product.features.map((feature, index) => (
+                {product.features?.map((feature, index) => (
                   <li
                     key={index}
                     className="flex items-center gap-2 text-gray-600 dark:text-gray-300"
@@ -325,7 +310,11 @@ export default function ProductPage() {
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     {feature}
                   </li>
-                ))}
+                )) || (
+                  <li className="text-gray-500 dark:text-gray-400">
+                    No features listed
+                  </li>
+                )}
               </ul>
             </div>
 
@@ -353,7 +342,7 @@ export default function ProductPage() {
                   </button>
                 </div>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {product.stockQuantity} available
+                  {product.stock || 0} available
                 </span>
               </div>
 
@@ -362,7 +351,7 @@ export default function ProductPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleAddToCart}
-                  disabled={!product.inStock}
+                  disabled={!(product.stock && product.stock > 0)}
                   className="flex-1 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-semibold"
                 >
                   <ShoppingCart className="w-5 h-5" />
@@ -486,7 +475,7 @@ export default function ProductPage() {
         >
           <ProductReviews
             productId={product.id.toString()}
-            productName={product.name}
+            productName={product.title}
           />
         </motion.div>
       </div>
