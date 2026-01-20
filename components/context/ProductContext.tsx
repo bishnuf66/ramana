@@ -2,18 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { toast } from "react-toastify";
-
-export interface Product {
-  id: number | string;
-  title: string;
-  price: number;
-  image: string;
-  rating: number;
-  category: string;
-  description: string;
-  inStock: boolean;
-  stockQuantity: number;
-}
+import { Product } from "@/types/product";
 
 interface ProductContextType {
   product: Product | null;

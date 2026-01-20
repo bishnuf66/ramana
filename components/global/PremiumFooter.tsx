@@ -20,6 +20,7 @@ export default function PremiumFooter() {
     company: [
       { name: "About Us", href: "#about" },
       { name: "Our Story", href: "#story" },
+      { name: "Blog", href: "/blog" },
       { name: "Careers", href: "#careers" },
       { name: "Contact", href: "#contact" },
     ],
@@ -61,7 +62,9 @@ export default function PremiumFooter() {
                 className="h-14 w-14 rounded-full ring-2 ring-green-500"
               />
               <div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">Ramana</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Ramana
+                </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Handmade Bouquets
                 </div>
@@ -101,7 +104,11 @@ export default function PremiumFooter() {
                 whileTap={{ scale: 0.9 }}
                 className="p-3 bg-gray-200/50 dark:bg-white/10 hover:bg-black rounded-full transition-colors backdrop-blur-sm"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                 </svg>
               </motion.a>
@@ -115,7 +122,9 @@ export default function PremiumFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Company</h3>
+            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
+              Company
+            </h3>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
@@ -137,7 +146,9 @@ export default function PremiumFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Shop</h3>
+            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
+              Shop
+            </h3>
             <ul className="space-y-3">
               {footerLinks.shop.map((link) => (
                 <li key={link.name}>
@@ -159,12 +170,17 @@ export default function PremiumFooter() {
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
           >
-            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Contact</h3>
+            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
+              Contact
+            </h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Phone className="w-5 h-5 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
                 <div>
-                  <a href="tel:+9779819274719" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <a
+                    href="tel:+9779819274719"
+                    className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                  >
                     +977 98192747199
                   </a>
                 </div>
@@ -172,14 +188,19 @@ export default function PremiumFooter() {
               <li className="flex items-start gap-3">
                 <Mail className="w-5 h-5 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
                 <div>
-                  <a href="mailto:ramanatheeng65@gmail.com" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                  <a
+                    href="mailto:ramanatheeng65@gmail.com"
+                    className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                  >
                     ramanatheeng65@gmail.com
                   </a>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
-                <span className="text-gray-600 dark:text-gray-400">Kathmandu Valley, Nepal</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Kathmandu Valley, Nepal
+                </span>
               </li>
               <li className="flex items-start gap-3">
                 <MessageCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
@@ -212,7 +233,8 @@ export default function PremiumFooter() {
           className="border-t border-gray-300 dark:border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4"
         >
           <p className="text-gray-600 dark:text-gray-400 text-sm">
-            Copyright © {currentYear} Ramana Handmade Bouquets. All rights reserved.
+            Copyright © {currentYear} Ramana Handmade Bouquets. All rights
+            reserved.
           </p>
           <p className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-2">
             Made with <Heart className="w-4 h-4 text-rose-500 fill-current" />{" "}
