@@ -4,16 +4,7 @@ import React, { useState, useEffect } from "react";
 import PremiumProductCard from "./PremiumProductCard";
 import { supabase } from "@/lib/supabase/client";
 
-interface Product {
-  id: number | string;
-  title: string;
-  description?: string;
-  price: number;
-  discountPrice?: number;
-  image: string;
-  rating: number;
-  category?: string;
-}
+import { Product } from "../../types/product";
 
 const ExploreProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -27,24 +18,21 @@ const ExploreProducts: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select(
-          "id, title, description, price, discount_price, cover_image, gallery_images, rating, category"
-        )
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(8); // Limit to 8 products for the homepage
 
       if (error) throw error;
 
-      // Transform data to match ProductCard interface
+      // Transform data to match Product interface
       const transformedProducts = (data || []).map((product: any) => ({
-        id: product.id, // Keep as UUID string
-        title: product.title,
-        description: product.description,
-        price: product.price,
-        discountPrice: product.discount_price,
-        image: product.cover_image || "/placeholder.jpg",
-        rating: product.rating,
-        category: product.category,
+        ...product,
+        mainImage: product.cover_image || product.image_url,
+        galleryImages: Array.isArray(product.gallery_images)
+          ? product.gallery_images.map((img: any) =>
+              typeof img === "string" ? img : img.url,
+            )
+          : [],
       }));
 
       setProducts(transformedProducts);

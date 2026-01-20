@@ -5,16 +5,10 @@ import { useState } from "react";
 import { ShoppingCart, X, Plus, Minus, Star, Heart } from "lucide-react";
 import Image from "next/image";
 
+import { Product } from "../../types/product";
+
 interface ProductModalProps {
-  product: {
-    id: number | string;
-    image: string;
-    price: number;
-    rating: number;
-    title: string;
-    description?: string;
-    discountPrice?: number;
-  };
+  product: Product;
   onClose: () => void;
   addToCart: (product: any) => void;
 }
@@ -80,7 +74,9 @@ const PremiumProductModal: React.FC<ProductModalProps> = ({
             {/* Image Section */}
             <div className="relative h-96 md:h-full min-h-[400px] bg-gradient-to-br from-green-50 to-rose-50">
               <Image
-                src={product.image}
+                src={
+                  product.mainImage || product.image_url || "/placeholder.jpg"
+                }
                 alt={product.title}
                 width={400}
                 height={400}
@@ -98,7 +94,7 @@ const PremiumProductModal: React.FC<ProductModalProps> = ({
                       <Star
                         key={i}
                         className={`w-5 h-5 ${
-                          i < Math.floor(product.rating)
+                          i < Math.floor(product.rating || 0)
                             ? "text-yellow-400 fill-current"
                             : "text-gray-300"
                         }`}
@@ -106,7 +102,7 @@ const PremiumProductModal: React.FC<ProductModalProps> = ({
                     ))}
                   </div>
                   <span className="text-sm text-gray-600">
-                    ({product.rating})
+                    ({product.rating || 0})
                   </span>
                 </div>
 
@@ -118,20 +114,20 @@ const PremiumProductModal: React.FC<ProductModalProps> = ({
                 {/* Price */}
                 <div className="flex items-baseline gap-3 mb-6">
                   <span className="text-4xl font-bold text-green-600">
-                    ${product.discountPrice ?? product.price}
+                    ${product.discount_price ?? product.price}
                   </span>
-                  {product.discountPrice && (
+                  {product.discount_price && (
                     <span className="text-xl text-gray-400 line-through">
                       ${product.price.toFixed(2)}
                     </span>
                   )}
-                  {product.discountPrice && (
+                  {product.discount_price && (
                     <span className="px-3 py-1 bg-rose-100 text-rose-600 rounded-full text-sm font-semibold">
                       Save{" "}
                       {Math.round(
-                        ((product.price - product.discountPrice) /
+                        ((product.price - (product.discount_price || 0)) /
                           product.price) *
-                          100
+                          100,
                       )}
                       %
                     </span>
@@ -183,8 +179,8 @@ const PremiumProductModal: React.FC<ProductModalProps> = ({
               >
                 <ShoppingCart className="w-6 h-6" />
                 Add to Cart - $
-                {((product.discountPrice ?? product.price) * quantity).toFixed(
-                  2
+                {((product.discount_price || product.price) * quantity).toFixed(
+                  2,
                 )}
               </motion.button>
             </div>

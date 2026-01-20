@@ -7,16 +7,10 @@ import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import PremiumProductModal from "./PremiumProductModal";
 
+import { Product } from "../../types/product";
+
 interface ProductProps {
-  product: {
-    id: number | string;
-    image: string;
-    price: number;
-    rating: number;
-    title: string;
-    description?: string;
-    discountPrice?: number;
-  };
+  product: Product;
   index?: number;
 }
 
@@ -35,9 +29,9 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
       id: product.id,
       title: product.title,
       price: product.price,
-      image: product.image,
-      rating: product.rating,
-      category: "",
+      image: product.mainImage || product.image_url || "/placeholder.jpg",
+      rating: product.rating || 0,
+      category: product.category?.name || "",
       addedAt: new Date().toISOString(),
     });
   };
@@ -81,7 +75,7 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
         {/* Image Container */}
         <div className="relative h-64 overflow-hidden bg-gradient-to-br from-green-50 to-rose-50">
           <motion.img
-            src={product.image}
+            src={product.mainImage || product.image_url || "/placeholder.jpg"}
             alt={product.title}
             className="w-full h-full object-cover"
             animate={isHovered ? { scale: 1.1 } : { scale: 1 }}
@@ -119,23 +113,25 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
                 <Star
                   key={i}
                   className={`w-4 h-4 ${
-                    i < Math.floor(product.rating)
+                    i < Math.floor(product.rating || 0)
                       ? "text-yellow-400 fill-current"
                       : "text-gray-300"
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-600">({product.rating})</span>
+            <span className="text-sm text-gray-600">
+              ({product.rating || 0})
+            </span>
           </div>
 
           {/* Price & Add to Cart */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-100">
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-green-600">
-                ${product.discountPrice ?? product.price}
+                ${product.discount_price ?? product.price}
               </span>
-              {product.discountPrice && (
+              {product.discount_price && (
                 <span className="text-sm text-gray-400 line-through">
                   ${product.price.toFixed(2)}
                 </span>
@@ -147,7 +143,17 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
               whileTap={{ scale: 0.95 }}
               onClick={(e) => {
                 e.stopPropagation();
-                addToCart({ ...product, quantity: 1 });
+                addToCart({
+                  id: product.id,
+                  title: product.title,
+                  price: product.discount_price || product.price,
+                  image:
+                    product.mainImage ||
+                    product.image_url ||
+                    "/placeholder.jpg",
+                  quantity: 1,
+                  rating: product.rating || 0,
+                });
               }}
               className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
             >
