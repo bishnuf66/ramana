@@ -428,7 +428,7 @@ export default function UserDashboard() {
                   </h3>
                   {orders.length === 0 ? (
                     <p className="text-gray-600 dark:text-gray-400">
-                      You haven't placed any orders yet.
+                      You haven&apos;t placed any orders yet.
                     </p>
                   ) : (
                     <div className="space-y-4">
@@ -574,7 +574,7 @@ export default function UserDashboard() {
                       No Reviews Yet
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      Share your experience with products you've purchased
+                      Share your experience with products you&apos;ve purchased
                     </p>
                     <button
                       onClick={() => router.push("/products")}

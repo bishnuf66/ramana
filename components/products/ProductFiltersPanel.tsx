@@ -59,8 +59,8 @@ export default function ProductFiltersPanel({
             <input
               type="radio"
               name="category"
-              checked={!filters.category}
-              onChange={() => updateFilter("category", undefined)}
+              checked={!filters.category_id}
+              onChange={() => updateFilter("category_id", undefined)}
               className="mr-2 text-green-500 focus:ring-green-500"
             />
             <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -72,8 +72,8 @@ export default function ProductFiltersPanel({
               <input
                 type="radio"
                 name="category"
-                checked={filters.category === category.slug}
-                onChange={() => updateFilter("category", category.slug)}
+                checked={filters.category_id === category.id}
+                onChange={() => updateFilter("category_id", category.id)}
                 className="mr-2 text-green-500 focus:ring-green-500"
               />
               <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -228,11 +228,11 @@ export default function ProductFiltersPanel({
             Active Filters
           </h4>
           <div className="flex flex-wrap gap-2">
-            {filters.category && (
+            {filters.category_id && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded-full">
-                {categories.find((c) => c.slug === filters.category)?.name}
+                {categories.find((c) => c.id === filters.category_id)?.name}
                 <button
-                  onClick={() => updateFilter("category", undefined)}
+                  onClick={() => updateFilter("category_id", undefined)}
                   className="hover:text-green-600"
                 >
                   <X className="w-3 h-3" />

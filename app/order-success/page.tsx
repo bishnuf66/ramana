@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function OrderSuccessPage() {
+function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
 
@@ -42,5 +43,25 @@ export default function OrderSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
+          <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg p-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded mb-6"></div>
+              <div className="h-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <OrderSuccessContent />
+    </Suspense>
   );
 }
