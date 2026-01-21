@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle, ShoppingBag, Package, ArrowLeft } from "lucide-react";
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
@@ -10,37 +12,93 @@ function OrderSuccessContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
-      <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg p-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-          Order Placed
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Thank you! Your order has been placed successfully.
-        </p>
+      <div className="max-w-2xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center"
+        >
+          {/* Success Icon */}
+          <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full mx-auto mb-6 flex items-center justify-center">
+            <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+          </div>
 
-        {orderId && (
-          <div className="mb-6">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Order ID</p>
-            <p className="font-mono text-gray-900 dark:text-white break-all">
-              {orderId}
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+            Order Placed Successfully! 🌸
+          </h1>
+
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Thank you for your order! We've received your request and will start
+            preparing your beautiful handmade bouquets.
+          </p>
+
+          {orderId && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mb-6"
+            >
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
+                  Order Confirmation Number
+                </p>
+                <p className="font-mono text-lg text-green-900 dark:text-green-100 break-all">
+                  {orderId}
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-300 mt-2">
+                  Please save this number for your records
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Next Steps */}
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+            <h3 className="font-medium text-gray-900 dark:text-white mb-2">
+              What happens next?
+            </h3>
+            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              <p>• We'll prepare your order with care</p>
+              <p>• You'll receive a confirmation email shortly</p>
+              <p>• We'll contact you for delivery details</p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              Continue Shopping
+            </Link>
+
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Package className="w-5 h-5" />
+              View Orders
+            </Link>
+          </div>
+
+          {/* Contact Info */}
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Questions about your order?
+              <button
+                onClick={() =>
+                  (window.location.href = "mailto:support@ramana.com.np")
+                }
+                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium ml-1"
+              >
+                Contact our support team
+              </button>
             </p>
           </div>
-        )}
-
-        <div className="flex gap-3">
-          <Link
-            href="/products"
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            Continue Shopping
-          </Link>
-          <Link
-            href="/"
-            className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Go Home
-          </Link>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
@@ -51,11 +109,10 @@ export default function OrderSuccessPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
-          <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg p-8">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded mb-6"></div>
-              <div className="h-20 bg-gray-200 rounded"></div>
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Loading...</p>
             </div>
           </div>
         </div>

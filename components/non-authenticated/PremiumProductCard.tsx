@@ -5,8 +5,7 @@ import { useState } from "react";
 import { Heart, ShoppingCart, Star, Sparkles } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
-import PremiumProductModal from "./PremiumProductModal";
-
+import { useRouter } from "next/navigation";
 import { Product } from "../../types/product";
 
 interface ProductProps {
@@ -17,9 +16,8 @@ interface ProductProps {
 const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
   const { addToCart, cart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
+  const router = useRouter();
   const cartItem = cart.find((item) => item.id === product.id);
   const quantity = cartItem ? cartItem.quantity : 0;
 
@@ -46,7 +44,7 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
         className="group relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer"
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => router.push(`/products/${product.id}`)}
       >
         {/* Premium Badge */}
         <div className="absolute top-4 left-4 z-10">
@@ -173,15 +171,6 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
           )}
         </div>
       </motion.div>
-
-      {/* Modal */}
-      {isModalOpen && (
-        <PremiumProductModal
-          product={product}
-          onClose={() => setIsModalOpen(false)}
-          addToCart={addToCart}
-        />
-      )}
     </>
   );
 };

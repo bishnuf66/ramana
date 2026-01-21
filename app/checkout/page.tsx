@@ -20,6 +20,7 @@ export default function CheckoutPage() {
     customer_email: "",
     customer_phone: "",
     shipping_address: "",
+    notes: "",
   });
 
   useEffect(() => {
@@ -75,6 +76,20 @@ export default function CheckoutPage() {
       toast.error("Please enter your email");
       return;
     }
+    if (!form.customer_phone.trim()) {
+      toast.error("Please enter your phone number");
+      return;
+    }
+    // Phone validation - basic pattern for phone numbers
+    const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+    if (!phoneRegex.test(form.customer_phone.trim())) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+    if (form.customer_phone.trim().length < 10) {
+      toast.error("Phone number must be at least 10 digits");
+      return;
+    }
     if (!form.shipping_address.trim()) {
       toast.error("Please enter your shipping address");
       return;
@@ -86,22 +101,37 @@ export default function CheckoutPage() {
       const orderPayload = {
         customer_name: form.customer_name.trim(),
         customer_email: form.customer_email.trim(),
-        customer_phone: form.customer_phone.trim() || null,
+        customer_phone: form.customer_phone.trim(),
         shipping_address: form.shipping_address.trim(),
+        notes: form.notes.trim() || null,
         total_amount: total,
         items: cart,
         status: "pending" as const,
       };
 
-      const { error } = await supabase.from("orders").insert(orderPayload);
+      const { data, error } = await supabase
+        .from("orders")
+        .insert(orderPayload)
+        .select();
 
       if (error) throw error;
 
       clearCart();
-      router.push(`/order-success`);
+
+      // Redirect to success page with order ID
+      if (data && data[0]) {
+        router.push(`/order-success?orderId=${data[0].id}`);
+      } else {
+        router.push("/order-success");
+      }
     } catch (error: any) {
       console.error("Order create error:", error);
       toast.error(error?.message || "Failed to place order");
+
+      // Redirect to failure page with error info
+      router.push(
+        `/order-failure?error=${encodeURIComponent(error?.message || "Unknown error")}`,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -170,15 +200,33 @@ export default function CheckoutPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Phone (optional)
+                Phone *
               </label>
               <input
+                type="tel"
                 value={form.customer_phone}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, customer_phone: e.target.value }))
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="98XXXXXXXX"
+                disabled={loadingProfile}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Order Notes (optional)
+              </label>
+              <textarea
+                value={form.notes}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, notes: e.target.value }))
+                }
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Special instructions for delivery, gift message, etc."
                 disabled={loadingProfile}
               />
             </div>
