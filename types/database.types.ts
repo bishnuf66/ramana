@@ -107,6 +107,45 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+          status: string | null
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string | null
@@ -115,6 +154,7 @@ export type Database = {
           customer_phone: string | null
           id: string
           items: Json
+          notes: string | null
           shipping_address: string
           status: string
           total_amount: number
@@ -127,6 +167,7 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           items: Json
+          notes?: string | null
           shipping_address: string
           status?: string
           total_amount: number
@@ -139,6 +180,7 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           items?: Json
+          notes?: string | null
           shipping_address?: string
           status?: string
           total_amount?: number
@@ -215,6 +257,8 @@ export type Database = {
           gallery_images: Json | null
           id: string
           image_url: string | null
+          is_active: boolean
+          is_featured: boolean
           price: number
           rating: number | null
           stock: number | null
@@ -230,6 +274,8 @@ export type Database = {
           gallery_images?: Json | null
           id?: string
           image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
           price: number
           rating?: number | null
           stock?: number | null
@@ -245,6 +291,8 @@ export type Database = {
           gallery_images?: Json | null
           id?: string
           image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
           price?: number
           rating?: number | null
           stock?: number | null

@@ -21,6 +21,7 @@ import { supabase } from "@/lib/supabase/client";
 import { signOut } from "@/lib/supabase/auth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import ProductSearch from "../search/ProductSearch";
 
 export default function PremiumHeader() {
   const { getTotalItems, clearCart } = useCart();
@@ -192,22 +193,22 @@ export default function PremiumHeader() {
                 Contact
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 dark:bg-green-400 group-hover:w-full transition-all duration-300" />
               </Link>
+
+              {/* Search Bar */}
+              <div className="flex-1 max-w-md">
+                <ProductSearch
+                  onSearch={(query) => {
+                    // Optional: Handle search in header
+                    console.log("Search query:", query);
+                  }}
+                  placeholder="Search bouquets..."
+                  className="w-full"
+                />
+              </div>
             </nav>
 
             {/* Actions */}
             <div className="flex items-center gap-4">
-              {/* Search */}
-              <div className="hidden lg:block relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search bouquets..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-64 rounded-full border border-gray-200 dark:border-gray-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 outline-none transition-all bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-900 dark:text-gray-100"
-                />
-              </div>
-
               {/* Theme Toggle */}
               <ThemeToggle />
 
@@ -369,6 +370,15 @@ export default function PremiumHeader() {
               className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700"
             >
               <nav className="px-4 py-4 space-y-4">
+                <div className="mb-4">
+                  <ProductSearch
+                    onSearch={(query) => {
+                      console.log("Mobile search query:", query);
+                    }}
+                    placeholder="Search bouquets..."
+                    className="w-full"
+                  />
+                </div>
                 <Link
                   href="/"
                   className="block text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium py-2"
