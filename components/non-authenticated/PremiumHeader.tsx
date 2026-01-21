@@ -25,9 +25,14 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function PremiumHeader() {
-  const { getTotalItems } = useCart();
-  const { favorites, addToFavorites, removeFromFavorites, isFavorite } =
-    useFavorites();
+  const { getTotalItems, clearCart } = useCart();
+  const {
+    favorites,
+    addToFavorites,
+    removeFromFavorites,
+    isFavorite,
+    clearFavorites,
+  } = useFavorites();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -96,6 +101,16 @@ export default function PremiumHeader() {
   const handleLogout = async () => {
     try {
       await signOut();
+      // Clear cart and favorites using context methods
+      clearCart();
+      clearFavorites();
+      // Also clear localStorage as backup and prevent sync from restoring
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("cart");
+        localStorage.removeItem("favorites");
+        // Force clear favorites in localStorage immediately
+        localStorage.setItem("favorites", JSON.stringify([]));
+      }
       router.push("/");
       setIsProfileDropdownOpen(false);
     } catch (error) {

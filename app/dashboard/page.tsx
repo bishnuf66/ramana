@@ -23,6 +23,8 @@ import { signOut } from "@/lib/supabase/auth";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Image from "next/image";
+import { useCart } from "@/components/context/CartContext";
+import { useFavorites } from "@/components/context/FavoritesContext";
 
 interface UserProfile {
   id: string;
@@ -60,6 +62,8 @@ interface UserReview {
 
 export default function UserDashboard() {
   const router = useRouter();
+  const { clearCart } = useCart();
+  const { clearFavorites } = useFavorites();
   const [activeTab, setActiveTab] = useState<
     "overview" | "orders" | "reviews" | "profile"
   >("overview");
@@ -201,6 +205,16 @@ export default function UserDashboard() {
   const handleLogout = async () => {
     try {
       await signOut();
+      // Clear cart and favorites using context methods
+      clearCart();
+      clearFavorites();
+      // Also clear localStorage as backup and prevent sync from restoring
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("cart");
+        localStorage.removeItem("favorites");
+        // Force clear favorites in localStorage immediately
+        localStorage.setItem("favorites", JSON.stringify([]));
+      }
       router.push("/");
       router.refresh();
     } catch (error) {
