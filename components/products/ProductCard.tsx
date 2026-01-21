@@ -107,8 +107,17 @@ Thank you! 🌸`;
                   {product.title}
                 </h3>
               </div>
-              <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                <Heart className="w-5 h-5" />
+              <button
+                onClick={handleFavorite}
+                className={`p-2 transition-colors ${
+                  isFavorite(product.id)
+                    ? "text-red-500 hover:text-red-600"
+                    : "text-gray-400 hover:text-red-500"
+                }`}
+              >
+                <Heart
+                  className={`w-5 h-5 ${isFavorite(product.id) ? "fill-current" : ""}`}
+                />
               </button>
             </div>
 
@@ -156,6 +165,15 @@ Thank you! 🌸`;
               </div>
 
               <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleWhatsAppOrder}
+                  className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  title="Order via WhatsApp"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </motion.button>
                 <Link href={`/products/${product.id}`}>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -268,6 +286,16 @@ Thank you! 🌸`;
 
         {/* Actions */}
         <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleWhatsAppOrder}
+            className="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+            title="Order via WhatsApp"
+          >
+            <MessageCircle className="w-4 h-4" />
+            WhatsApp
+          </motion.button>
           <Link href={`/products/${product.id}`} className="flex-1">
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -285,7 +313,7 @@ Thank you! 🌸`;
             className="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             <ShoppingCart className="w-4 h-4" />
-            Add to Cart
+            Cart
           </motion.button>
         </div>
       </div>
