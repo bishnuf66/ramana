@@ -19,8 +19,9 @@ const ExploreProducts: React.FC = () => {
       const { data, error } = await supabase
         .from("products")
         .select("*")
+        .eq("is_featured", true) // Only fetch featured products
         .order("created_at", { ascending: false })
-        .limit(8); // Limit to 8 products for the homepage
+        .limit(8); // Limit to 8 featured products for the homepage
 
       if (error) throw error;
 
@@ -37,7 +38,7 @@ const ExploreProducts: React.FC = () => {
 
       setProducts(transformedProducts);
     } catch (error) {
-      console.error("Failed to fetch products:", error);
+      console.error("Failed to fetch featured products:", error);
       // Fallback to empty array on error
       setProducts([]);
     } finally {
@@ -49,7 +50,7 @@ const ExploreProducts: React.FC = () => {
     return (
       <div className="p-8">
         <div className="flex flex-row justify-between mb-4">
-          <div className="font-bold text-2xl">Explore Products</div>
+          <div className="font-bold text-2xl">Featured Products</div>
           <div className="primary-red underline">View more</div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4">

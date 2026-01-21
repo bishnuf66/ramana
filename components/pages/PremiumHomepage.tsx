@@ -21,7 +21,7 @@ function useScrollAnimation() {
           setIsVisible(true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (ref.current) {
@@ -86,7 +86,7 @@ export default function PremiumHomepage() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Our <span className="text-gradient">Premium Collection</span>
+              Our <span className="text-gradient">Featured Collection</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Handpicked arrangements crafted with love and attention to detail

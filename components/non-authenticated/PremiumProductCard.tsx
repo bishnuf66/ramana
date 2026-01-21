@@ -2,11 +2,18 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Heart, ShoppingCart, Star, Sparkles } from "lucide-react";
+import {
+  Heart,
+  ShoppingCart,
+  Star,
+  Sparkles,
+  MessageCircle,
+} from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { useRouter } from "next/navigation";
 import { Product } from "../../types/product";
+import { SocialLink } from "../../utils/social-link";
 
 interface ProductProps {
   product: Product;
@@ -32,6 +39,25 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
       category: product.category?.name || "",
       addedAt: new Date().toISOString(),
     });
+  };
+
+  const handleWhatsAppOrder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    const phoneNumber = SocialLink.phone; // Use phone from social links
+    const message = `Hello! I'd like to order:
+    
+*${product.title}*
+${product.description ? `\n${product.description}` : ""}
+${product.discount_price ? `\n*Discount Price:* $${product.discount_price.toFixed(2)}` : `\n*Price:* $${product.price.toFixed(2)}`}
+
+Please let me know the availability and delivery details.
+Thank you! 🌸`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `${SocialLink.whatsapp}?text=${encodedMessage}`;
+
+    window.open(whatsappUrl, "_blank");
   };
 
   return (
@@ -123,7 +149,7 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
             </span>
           </div>
 
-          {/* Price & Add to Cart */}
+          {/* Price & Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-100">
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-green-600">
@@ -136,27 +162,40 @@ const PremiumProductCard: React.FC<ProductProps> = ({ product, index = 0 }) => {
               )}
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                addToCart({
-                  id: product.id,
-                  title: product.title,
-                  price: product.discount_price || product.price,
-                  image:
-                    product.mainImage ||
-                    product.image_url ||
-                    "/placeholder.jpg",
-                  quantity: 1,
-                  rating: product.rating || 0,
-                });
-              }}
-              className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <ShoppingCart className="w-5 h-5" />
-            </motion.button>
+            <div className="flex gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleWhatsAppOrder}
+                className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                title="Order via WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addToCart({
+                    id: product.id,
+                    title: product.title,
+                    price: product.discount_price || product.price,
+                    image:
+                      product.mainImage ||
+                      product.image_url ||
+                      "/placeholder.jpg",
+                    quantity: 1,
+                    rating: product.rating || 0,
+                  });
+                }}
+                className="p-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                title="Add to Cart"
+              >
+                <ShoppingCart className="w-5 h-5" />
+              </motion.button>
+            </div>
           </div>
 
           {/* Quantity Badge */}
