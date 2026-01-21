@@ -1,11 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Heart, ShoppingCart, Star, Eye } from "lucide-react";
+import { Heart, ShoppingCart, Star, Eye, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "../../types/product";
 import { useCart } from "../context/CartContext";
+import { useFavorites } from "../context/FavoritesContext";
+import { SocialLink } from "../../utils/social-link";
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +19,7 @@ export default function ProductCard({
   viewMode = "grid",
 }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const handleAddToCart = () => {
     addToCart({
@@ -27,6 +30,37 @@ export default function ProductCard({
       quantity: 1,
       rating: product.rating || 0,
     });
+  };
+
+  const handleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.mainImage || product.image_url || "/placeholder.jpg",
+      rating: product.rating || 0,
+      category: product.category?.name || "",
+      addedAt: new Date().toISOString(),
+    });
+  };
+
+  const handleWhatsAppOrder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    const message = `Hello! I'd like to order:
+    
+*${product.title}*
+${product.shortDescription || product.description || ""}
+${product.discount_price ? `\n*Discount Price:* NPR ${product.discount_price.toLocaleString()}` : `\n*Price:* NPR ${product.price.toLocaleString()}`}
+
+Please let me know the availability and delivery details.
+Thank you! 🌸`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `${SocialLink.whatsapp}?text=${encodedMessage}`;
+
+    window.open(whatsappUrl, "_blank");
   };
 
   const discountPercentage = product.discount_price
@@ -167,8 +201,17 @@ export default function ProductCard({
             -{discountPercentage}%
           </div>
         )}
-        <button className="absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg text-gray-400 hover:text-red-500 transition-colors">
-          <Heart className="w-4 h-4" />
+        <button
+          onClick={handleFavorite}
+          className={`absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg transition-colors ${
+            isFavorite(product.id)
+              ? "text-red-500 hover:text-red-600"
+              : "text-gray-400 hover:text-red-500"
+          }`}
+        >
+          <Heart
+            className={`w-4 h-4 ${isFavorite(product.id) ? "fill-current" : ""}`}
+          />
         </button>
         {!(product.stock && product.stock > 0) && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">

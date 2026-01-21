@@ -27,12 +27,6 @@ export default function FloatingContact() {
       href: `viber://chat?number=${SocialLink.phone.replace(/[^\d]/g, "")}`,
       color: "bg-purple-500 hover:bg-purple-600",
     },
-    {
-      icon: Mail,
-      label: "Email",
-      href: `mailto:${SocialLink.email}`,
-      color: "bg-blue-500 hover:bg-blue-600",
-    },
   ];
 
   return (

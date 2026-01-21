@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import PremiumProductCard from "./PremiumProductCard";
+import ProductCard from "../products/ProductCard";
 import { supabase } from "@/lib/supabase/client";
 
 import { Product } from "../../types/product";
@@ -34,6 +34,7 @@ const ExploreProducts: React.FC = () => {
               typeof img === "string" ? img : img.url,
             )
           : [],
+        shortDescription: product.description || undefined,
       }));
 
       setProducts(transformedProducts);
@@ -70,15 +71,13 @@ const ExploreProducts: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {products.length > 0 ? (
           products.map((product, index) => (
-            <PremiumProductCard
-              key={product.id}
-              product={product}
-              index={index}
-            />
+            <ProductCard key={product.id} product={product} viewMode="grid" />
           ))
         ) : (
           <div className="col-span-full text-center text-gray-500 py-12">
-            <p className="text-lg">No products available at the moment.</p>
+            <p className="text-lg">
+              No featured products available at the moment.
+            </p>
             <p className="text-sm mt-2">
               Check back soon for our latest arrangements!
             </p>

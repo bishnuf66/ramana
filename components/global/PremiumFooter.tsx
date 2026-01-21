@@ -18,14 +18,14 @@ export default function PremiumFooter() {
 
   const footerLinks = {
     company: [
-      { name: "About Us", href: "#about" },
+      { name: "About Us", href: "/about" },
       { name: "Our Story", href: "#story" },
       { name: "Blog", href: "/blog" },
       { name: "Careers", href: "#careers" },
       { name: "Contact", href: "#contact" },
     ],
     shop: [
-      { name: "All Products", href: "#products" },
+      { name: "All Products", href: "/products" },
       { name: "Flowers", href: "#flowers" },
       { name: "Accessories", href: "#accessories" },
       { name: "Gift Sets", href: "#gifts" },
@@ -34,7 +34,8 @@ export default function PremiumFooter() {
       { name: "FAQ", href: "#faq" },
       { name: "Shipping", href: "#shipping" },
       { name: "Returns", href: "#returns" },
-      { name: "Privacy Policy", href: "#privacy" },
+      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Terms & Conditions", href: "/terms" },
     ],
   };
 

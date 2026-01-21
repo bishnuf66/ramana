@@ -1,18 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  signInWithGoogle,
-  signInAdmin,
-  signUpWithEmail,
-} from "@/lib/supabase/auth";
-import { X } from "lucide-react";
+import { signInWithGoogle, signUpWithEmail } from "@/lib/supabase/auth";
 import Link from "next/link";
-import { toast } from "react-toastify";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -37,8 +30,6 @@ export default function LoginPage() {
     try {
       if (isSignUp) {
         await signUpWithEmail(formData.email, formData.password, formData.name);
-      } else {
-        await signInAdmin(formData.email, formData.password);
       }
     } catch (error) {
       console.error("Authentication error:", error);
