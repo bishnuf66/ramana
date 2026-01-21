@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
 import { Suspense } from "react";
 
 function AuthCallbackContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -25,18 +24,7 @@ function AuthCallbackContent() {
         if (data.session) {
           toast.success("Successfully signed in!");
 
-          // Check if user should go to admin or regular page
-          const { data: adminData } = await supabase
-            .from("admin_users")
-            .select("*")
-            .eq("id", data.session.user.id)
-            .single();
-
-          if (adminData) {
-            router.push("/admin/dashboard");
-          } else {
-            router.push("/");
-          }
+          router.push("/");
         } else {
           router.push("/login");
         }

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import {
   signInWithGoogle,
-  signInAdmin,
+  signInWithEmail,
   signUpWithEmail,
 } from "@/lib/supabase/auth";
 import { toast } from "react-toastify";
@@ -53,8 +53,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         await signUpWithEmail(formData.email, formData.password, formData.name);
         toast.success("Account created successfully!");
       } else {
-        await signInAdmin(formData.email, formData.password);
-        toast.success("Welcome back!");
+        await signInWithEmail(formData.email, formData.password);
       }
       onClose();
       // Reset form

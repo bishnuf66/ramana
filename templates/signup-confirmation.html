@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Our Flower Shop 🌸</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background: linear-gradient(135deg, #fdf2f8 0%, #f0fdf4 50%, #fffef7 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+            opacity: 0.1;
+        }
+        
+        .header::after {
+            content: '🌸';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            opacity: 0.2;
+        }
+        
+        .logo {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .message {
+            font-size: 16px;
+            color: #4b5563;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.7;
+        }
+        
+        .confirmation-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+            color: white;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
+            transition: all 0.3s ease;
+            margin: 30px auto;
+            display: block;
+            max-width: 250px;
+        }
+        
+        .confirmation-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(34, 197, 94, 0.4);
+        }
+        
+        .security-note {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left: 4px solid #22c55e;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        .security-title {
+            font-weight: 600;
+            color: #15803d;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .security-text {
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .social-link {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .flower-decoration {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+            opacity: 0.6;
+        }
+        
+        .flower-1 {
+            top: 20px;
+            left: 20px;
+        }
+        
+        .flower-2 {
+            bottom: 20px;
+            right: 20px;
+        }
+        
+        @media (max-width: 640px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header, .content {
+                padding: 30px 20px;
+            }
+            
+            .welcome-title {
+                font-size: 20px;
+            }
+            
+            .confirmation-button {
+                padding: 14px 24px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Decorative Elements -->
+        <div class="flower-decoration flower-1"></div>
+        <div class="flower-decoration flower-2"></div>
+        
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">� Ramana</div>
+            <div class="tagline">Handmade Bouquets Delivered</div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <h1 class="welcome-title">Welcome to Ramana! 🌸</h1>
+            
+            <p class="message">
+                Thank you for signing up! We're so excited to have you join our community of handmade bouquet lovers. 
+                To complete your registration and start exploring our beautiful arrangements, please confirm your email address.
+            </p>
+            
+            <a href="{{ .ConfirmationURL }}" class="confirmation-button">
+                ✨ Confirm Your Email
+            </a>
+            
+            <!-- Security Note -->
+            <div class="security-note">
+                <div class="security-title">
+                    🔒 Security Notice
+                </div>
+                <div class="security-text">
+                    This confirmation link will expire in 24 hours for your security. If you didn't create an account, 
+                    please ignore this email or contact our support team.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">
+                Questions? Need help? We're here for you! �
+            </p>
+            
+            <div class="social-links">
+                <a href="#" class="social-link">
+                    📧
+                </a>
+                <a href="#" class="social-link">
+                    🌐
+                </a>
+                <a href="#" class="social-link">
+                    📱
+                </a>
+            </div>
+            
+            <p class="footer-text" style="margin-top: 20px;">
+                © 2024 � Ramana - Handmade Bouquets. All rights reserved.<br>
+                Spreading joy, one handmade bouquet at a time.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
