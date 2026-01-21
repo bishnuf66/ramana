@@ -17,8 +17,6 @@ import Logo from "../global/Logo";
 import ThemeToggle from "../global/ThemeToggle";
 import { useCart } from "../context/CartContext";
 import { useFavorites } from "@/components/context/FavoritesContext";
-import { useProduct } from "@/components/context/ProductContext";
-import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
 import { signOut } from "@/lib/supabase/auth";
 import { useRouter } from "next/navigation";

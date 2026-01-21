@@ -7,6 +7,7 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useRef,
 } from "react";
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
@@ -45,6 +46,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   });
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
+  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     supabase.auth
@@ -65,14 +67,24 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!userId || !synced) return;
-    (async () => {
+    if (persistTimeoutRef.current) {
+      clearTimeout(persistTimeoutRef.current);
+    }
+
+    persistTimeoutRef.current = setTimeout(async () => {
       const { error } = await supabase.from("user_favorites").upsert({
         user_id: userId,
         items: favorites,
         updated_at: new Date().toISOString(),
       });
       if (error) console.error("favorites persist error", error);
-    })();
+    }, 500);
+
+    return () => {
+      if (persistTimeoutRef.current) {
+        clearTimeout(persistTimeoutRef.current);
+      }
+    };
   }, [favorites, userId, synced]);
 
   useEffect(() => {
@@ -137,9 +149,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         ...product,
         addedAt: product.addedAt || new Date().toISOString(),
       };
+      toast.success(`${product.title} added to favorites`);
       return [...prevFavorites, withAddedAt];
     });
-    toast.success(`${product.title} added to favorites`);
   }, []);
 
   const removeFromFavorites = useCallback((id: number | string) => {
