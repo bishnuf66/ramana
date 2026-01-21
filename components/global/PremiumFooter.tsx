@@ -12,17 +12,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Logo from "./Logo";
+import { SocialLink } from "../../utils/social-link";
 
 export default function PremiumFooter() {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
     company: [
-      { name: "About Us", href: "/about" },
-      { name: "Our Story", href: "#story" },
+      { name: "Our Story", href: "/about" },
       { name: "Blog", href: "/blog" },
-      { name: "Careers", href: "#careers" },
-      { name: "Contact", href: "#contact" },
+      { name: "Contact", href: "/contact" },
     ],
     shop: [
       { name: "All Products", href: "/products" },
@@ -78,7 +77,7 @@ export default function PremiumFooter() {
             </p>
             <div className="flex gap-4">
               <motion.a
-                href="https://www.facebook.com/ramana.bouquets"
+                href={SocialLink.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.1, y: -5 }}
@@ -88,7 +87,7 @@ export default function PremiumFooter() {
                 <Facebook className="w-5 h-5" />
               </motion.a>
               <motion.a
-                href="https://www.instagram.com/ramana.bouquets"
+                href={SocialLink.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.1, y: -5 }}
@@ -98,7 +97,7 @@ export default function PremiumFooter() {
                 <Instagram className="w-5 h-5" />
               </motion.a>
               <motion.a
-                href="https://www.tiktok.com/@ramana.bouquets"
+                href={SocialLink.tiktok}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.1, y: -5 }}
@@ -164,7 +163,7 @@ export default function PremiumFooter() {
             </ul>
           </motion.div>
 
-          {/* Contact Info */}
+          {/* Legal Links */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -172,55 +171,32 @@ export default function PremiumFooter() {
             transition={{ delay: 0.3 }}
           >
             <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
-              Contact
+              Legal
             </h3>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
-                <div>
-                  <a
-                    href="tel:+9779819274719"
-                    className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                  >
-                    +977 98192747199
-                  </a>
-                </div>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  href="/privacy"
+                  className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                >
+                  Privacy Policy
+                </Link>
               </li>
-              <li className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
-                <div>
-                  <a
-                    href="mailto:ramanatheeng65@gmail.com"
-                    className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                  >
-                    ramanatheeng65@gmail.com
-                  </a>
-                </div>
+              <li>
+                <Link
+                  href="/terms"
+                  className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                >
+                  Terms & Conditions
+                </Link>
               </li>
-              <li className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
-                <span className="text-gray-600 dark:text-gray-400">
-                  Kathmandu Valley, Nepal
-                </span>
-              </li>
-              <li className="flex items-start gap-3">
-                <MessageCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
-                <div className="flex gap-3">
-                  <a
-                    href="viber://chat?number=9819274719"
-                    className="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                  >
-                    Viber
-                  </a>
-                  <a
-                    href="https://wa.me/9779819274719"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                  >
-                    WhatsApp
-                  </a>
-                </div>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                >
+                  Contact Us
+                </Link>
               </li>
             </ul>
           </motion.div>

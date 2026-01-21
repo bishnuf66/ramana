@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, MessageCircle, Clock } from "lucide-react";
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
+import { SocialLink } from "@/utils/social-link";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -59,7 +60,7 @@ export default function ContactPage() {
         message: "",
       });
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -318,6 +319,131 @@ export default function ContactPage() {
                     <span className="font-medium text-gray-900">Closed</span>
                   </div>
                 </div>
+              </div>
+
+              {/* WhatsApp Quick Contact */}
+              <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl shadow-xl p-8 text-white">
+                <div className="flex items-center gap-4 mb-4">
+                  <MessageCircle className="w-8 h-8" />
+                  <h3 className="text-xl font-bold">Quick WhatsApp Order</h3>
+                </div>
+                <p className="text-green-100 mb-6">
+                  For faster service, send us a message directly on WhatsApp
+                  with your order details.
+                </p>
+                <a
+                  href={SocialLink.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  Message on WhatsApp
+                </a>
+              </div>
+
+              {/* Business Hours */}
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <Clock className="w-6 h-6 text-green-600" />
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Business Hours
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Monday - Friday</span>
+                    <span className="font-medium text-gray-900">
+                      9:00 AM - 7:00 PM
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Saturday</span>
+                    <span className="font-medium text-gray-900">
+                      10:00 AM - 6:00 PM
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Sunday</span>
+                    <span className="font-medium text-gray-900">Closed</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Area */}
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <MapPin className="w-6 h-6 text-green-600" />
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Service Area
+                  </h3>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  We proudly serve the entire Kathmandu Valley, including
+                  Kathmandu, Lalitpur, and Bhaktapur.
+                </p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-green-800 font-medium">
+                    🎉 Free delivery available for orders above NPR 2000
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Contact Cards */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  Quick Contact
+                </h3>
+
+                {/* Phone Card */}
+                <motion.a
+                  href={`tel:${SocialLink.phone}`}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="block p-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-6 h-6" />
+                    <div>
+                      <h4 className="font-bold">Call Now</h4>
+                      <p className="text-sm opacity-90">+977 9819274719</p>
+                    </div>
+                  </div>
+                </motion.a>
+
+                {/* Viber Card */}
+                <motion.a
+                  href={`viber://chat?number=${SocialLink.phone.replace(/[^\d]/g, "")}`}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="block p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="w-6 h-6" />
+                    <div>
+                      <h4 className="font-bold">Viber</h4>
+                      <p className="text-sm opacity-90">Message us on Viber</p>
+                    </div>
+                  </div>
+                </motion.a>
+
+                {/* Email Card */}
+                <motion.a
+                  href={`mailto:${SocialLink.email}`}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="block p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-6 h-6" />
+                    <div>
+                      <h4 className="font-bold">Email Us</h4>
+                      <p className="text-sm opacity-90">
+                        ramanatheeng65@gmail.com
+                      </p>
+                    </div>
+                  </div>
+                </motion.a>
               </div>
             </motion.div>
           </div>
