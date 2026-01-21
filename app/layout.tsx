@@ -6,6 +6,7 @@ import PremiumHeader from "@/components/non-authenticated/PremiumHeader";
 import PremiumFooter from "@/components/global/PremiumFooter";
 import FloatingContact from "@/components/global/FloatingContact";
 import FaviconSwitcher from "@/components/FaviconSwitcher";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
@@ -40,6 +41,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon-light.ico" type="image/x-icon" />
+        <GoogleAnalytics />
       </head>
       <body className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
         <ThemeProvider>

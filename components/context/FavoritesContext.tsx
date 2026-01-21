@@ -12,6 +12,20 @@ import React, {
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
 
+// Simple debounce function
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  delay: number,
+): (...args: Parameters<T>) => void {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  return (...args: Parameters<T>) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => func(...args), delay);
+  };
+}
+
 export interface FavoriteProduct {
   id: number | string;
   title: string;
@@ -176,7 +190,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         toast.success("Product removed from favorites");
         return prevFavorites.filter((fav) => fav.id !== product.id);
       } else {
-        // Add to favorites
+        // Add to favorites - check if already exists to prevent duplicate
+        if (prevFavorites.some((fav) => fav.id === product.id)) {
+          return prevFavorites; // Already exists, don't add again
+        }
         toast.success("Product added to favorites");
         const withAddedAt: FavoriteProduct = {
           ...product,
