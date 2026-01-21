@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Search products by title, description, and category
+    // Search products by title and description
     const { data: products, error } = await supabase
       .from("products")
       .select(
@@ -26,15 +26,10 @@ export async function GET(request: NextRequest) {
         cover_image,
         image_url,
         stock,
-        is_featured,
-        categories(name)
+        is_featured
       `,
       )
-      .or([
-        { title: { ilike: `%${query}%` } },
-        { description: { ilike: `%${query}%` } },
-        { "categories.name": { ilike: `%${query}%` } },
-      ])
+      .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
       .order("is_featured", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(20);
@@ -55,7 +50,7 @@ export async function GET(request: NextRequest) {
         description: product.description,
         price: product.discount_price || product.price,
         originalPrice: product.price,
-        category: product.categories?.name || "Uncategorized",
+        category: "Bouquet", // Default category since we removed the join
         image: product.cover_image || product.image_url || "/placeholder.jpg",
         stock: product.stock,
         isFeatured: product.is_featured,

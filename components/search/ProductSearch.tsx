@@ -101,6 +101,13 @@ export default function ProductSearch({
     router.push(`/products/${product.id}`);
   };
 
+  const handleSeeAllResults = () => {
+    if (query.trim()) {
+      router.push(`/products?q=${encodeURIComponent(query.trim())}`);
+      setShowResults(false);
+    }
+  };
+
   const handleClearSearch = () => {
     setQuery("");
     setResults([]);
@@ -196,6 +203,18 @@ export default function ProductSearch({
                 No products found for "{query}"
               </div>
             ) : null}
+
+            {/* See all results button */}
+            {query && results.length > 0 && (
+              <div className="border-t border-gray-200 dark:border-gray-700 p-2">
+                <button
+                  onClick={handleSeeAllResults}
+                  className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors font-medium"
+                >
+                  See all results for "{query}"
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -8,6 +8,7 @@ import { Product, ProductFilters, ProductSort } from "../../types/product";
 import ProductCard from "../../components/products/ProductCard";
 import ProductFiltersPanel from "../../components/products/ProductFiltersPanel";
 import { toast } from "react-toastify";
+import { useSearchParams } from "next/navigation";
 
 // Database Product interface
 interface DbProduct {
@@ -39,7 +40,8 @@ const convertDbProduct = (dbProduct: DbProduct): Product => ({
 });
 
 export default function ProductsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [filters, setFilters] = useState<ProductFilters>({});
   const [sort, setSort] = useState<ProductSort>({
     field: "createdAt",
