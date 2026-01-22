@@ -6,8 +6,8 @@ export interface Category extends Tables<"categories"> {
 
 export interface Product extends Tables<"products"> {
   category?: Category;
+
   galleryImages?: string[];
-  mainImage?: string;
   shortDescription?: string;
   tags?: string[];
   features?: string[];

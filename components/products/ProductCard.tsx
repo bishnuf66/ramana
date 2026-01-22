@@ -26,7 +26,7 @@ export default function ProductCard({
       id: product.id,
       title: product.title,
       price: product.discount_price || product.price,
-      mainImage: product.mainImage || product.image_url || "/placeholder.jpg",
+      cover_image: product.cover_image || "/placeholder.jpg",
       quantity: 1,
       rating: product.rating || 0,
     });
@@ -38,7 +38,7 @@ export default function ProductCard({
       id: product.id,
       title: product.title,
       price: product.price,
-      image: product.mainImage || product.image_url || "/placeholder.jpg",
+      image: product.cover_image || "/placeholder.jpg",
       rating: product.rating || 0,
       category: product.category?.name || "",
       addedAt: new Date().toISOString(),
@@ -79,7 +79,7 @@ Thank you! 🌸`;
           {/* Image */}
           <div className="relative w-48 h-48 flex-shrink-0">
             <Image
-              src={product.mainImage || product.image_url || "/placeholder.jpg"}
+              src={product.cover_image || "/placeholder.jpg"}
               alt={product.title}
               fill
               className="object-cover"
@@ -209,7 +209,7 @@ Thank you! 🌸`;
       {/* Image */}
       <div className="relative aspect-square">
         <Image
-          src={product.mainImage || product.image_url || "/placeholder.jpg"}
+          src={product.cover_image || "/placeholder.jpg"}
           alt={product.title}
           fill
           className="object-cover"

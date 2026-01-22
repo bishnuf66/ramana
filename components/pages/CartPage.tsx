@@ -88,7 +88,7 @@ const CartPage: React.FC = () => {
                 >
                   <div className="flex flex-col items-center justify-center">
                     <Image
-                      src={item.mainImage || "/placeholder.jpg"}
+                      src={item.cover_image || "/placeholder.jpg"}
                       alt={item.title}
                       width={64}
                       height={64}

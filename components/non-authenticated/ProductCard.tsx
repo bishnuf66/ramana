@@ -10,7 +10,7 @@ import Image from "next/image";
 interface ProductProps {
   product: {
     id: number | string;
-    image: string;
+    mainImage: string;
     price: number;
     rating: number;
     title: string;
@@ -32,7 +32,7 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
       id: product.id,
       title: product.title,
       price: product.price,
-      image: product.image,
+      image: product.mainImage,
       rating: product.rating,
       category: "",
       addedAt: new Date().toISOString(),
@@ -48,7 +48,7 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
         {/* Image container */}
         <div className="bg-green-200 p-6 md:p-8 relative flex justify-center items-center">
           <Image
-            src={product.image}
+            src={product.mainImage}
             alt={product.title}
             width={112}
             height={112}
@@ -108,7 +108,7 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
       {/* Modal */}
       {isModalOpen && (
         <SingleProductModal
-          product={product}
+          product={{ ...product, image: product.mainImage }}
           onClose={() => setIsModalOpen(false)}
           addToCart={addToCart}
         />

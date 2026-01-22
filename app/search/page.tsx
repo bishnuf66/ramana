@@ -44,7 +44,7 @@ function SearchPageInner() {
           discount_price: item.discount_price,
           originalPrice: item.price,
           category: item.category || "Bouquet",
-          image: item.image || "/placeholder.jpg",
+          mainImage: item.image || "/placeholder.jpg",
           stock: item.stock || 0,
           is_featured: item.isFeatured || false,
           rating: item.rating || null,
