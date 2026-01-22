@@ -104,9 +104,9 @@ export default function NotFound() {
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
               <div className="text-green-500 font-medium mb-1">
-                Premium Fruits
+                Premium Handcrafted
               </div>
-              <div className="text-gray-600">Fresh & seasonal selections</div>
+              <div className="text-gray-600">Unique floral arrangements</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg">
               <div className="text-purple-500 font-medium mb-1">
