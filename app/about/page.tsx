@@ -62,9 +62,9 @@ export default function AboutPage() {
                   </span>
                   , where every bouquet tells a story of love, care, and
                   artistic expression. Founded with a passion for bringing joy
-                  through beautiful floral arrangements, we've been crafting
-                  stunning bouquets that capture emotions and create lasting
-                  memories.
+                  through beautiful floral arrangements, we&apos;ve been
+                  crafting stunning bouquets that capture emotions and create
+                  lasting memories.
                 </p>
                 <p>
                   What started as a small hobby in our home has blossomed into a

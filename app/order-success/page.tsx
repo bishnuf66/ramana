@@ -28,8 +28,8 @@ function OrderSuccessContent() {
           </h1>
 
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Thank you for your order! We've received your request and will start
-            preparing your beautiful handmade bouquets.
+            Thank you for your order! We&apos;ve received your request and will
+            start preparing your beautiful handmade bouquets.
           </p>
 
           {orderId && (
@@ -59,9 +59,9 @@ function OrderSuccessContent() {
               What happens next?
             </h3>
             <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p>• We'll prepare your order with care</p>
-              <p>• You'll receive a confirmation email shortly</p>
-              <p>• We'll contact you for delivery details</p>
+              <p>• We&apos;ll prepare your order with care</p>
+              <p>• You&apos;ll receive a confirmation email shortly</p>
+              <p>• We&apos;ll contact you for delivery details</p>
             </div>
           </div>
 

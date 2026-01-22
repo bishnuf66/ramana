@@ -51,11 +51,11 @@ export default function TermsPage() {
                   Agreement to Terms
                 </h2>
                 <p className="text-gray-600 leading-relaxed">
-                  By accessing and using Ramana Handmade Collection's website
-                  and services, you accept and agree to be bound by these Terms
-                  & Conditions. If you do not agree to these terms, please do
-                  not use our services. These terms apply to all visitors,
-                  users, and others who access or use the service.
+                  By accessing and using Ramana Handmade Collection&apos;s
+                  website and services, you accept and agree to be bound by
+                  these Terms &amp; Conditions. If you do not agree to these
+                  terms, please do not use our services. These terms apply to
+                  all visitors, users, and others who access or use the service.
                 </p>
               </div>
             </motion.div>

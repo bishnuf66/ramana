@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 interface Product {
@@ -198,10 +199,12 @@ export default function ProductSearch({
                     onClick={() => handleResultClick(product)}
                   >
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <img
+                      <Image
                         src={product.image}
                         alt={product.title}
                         className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded"
+                        width={32}
+                        height={32}
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
                             "/placeholder.jpg";
@@ -226,7 +229,7 @@ export default function ProductSearch({
               </div>
             ) : query ? (
               <div className="p-3 sm:p-4 text-center text-gray-500 dark:text-gray-400 text-sm sm:text-base">
-                No products found for "{query}"
+                No products found for &quot;{query}&quot;
               </div>
             ) : null}
 

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, Search } from "lucide-react";
 import { useFavorites } from "@/components/context/FavoritesContext";
 import { motion } from "framer-motion";
@@ -107,10 +108,12 @@ export default function FavoritesPage() {
                 <div className="relative">
                   {/* Product Image */}
                   <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                    <img
+                    <Image
                       src={favorite.image}
                       alt={favorite.title}
                       className="w-full h-full object-cover"
+                      width={300}
+                      height={300}
                     />
                   </div>
 

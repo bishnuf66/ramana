@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
 
 // Simple debounce function
-function debounce<T extends (...args: any[]) => void>(
+function useDebounce<T extends (...args: any[]) => void>(
   func: T,
   delay: number,
 ): (...args: Parameters<T>) => void {
@@ -44,6 +44,9 @@ interface FavoritesContextType {
   isFavorite: (id: number | string) => boolean;
   getTotalFavorites: () => number;
   toggleFavorite: (product: FavoriteProduct) => void;
+  loadUserData?: () => Promise<void>;
+  syncFavorites?: () => Promise<void>;
+  getFavorites?: () => Promise<FavoriteProduct[]>;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(

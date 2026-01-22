@@ -84,11 +84,6 @@ export default function UserDashboard() {
     phone: "",
     address: "",
   });
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
   const loadUserData = async () => {
     try {
       setLoading(true);
@@ -167,6 +162,9 @@ export default function UserDashboard() {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    loadUserData();
+  }, [loadUserData]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();

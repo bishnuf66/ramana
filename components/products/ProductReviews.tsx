@@ -47,11 +47,7 @@ export default function ProductReviews({
   });
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  // Fetch reviews
-  useEffect(() => {
-    fetchReviews();
-  }, [productId, filters]);
-
+  // Fetch reviews function
   const fetchReviews = async () => {
     try {
       setLoading(true);

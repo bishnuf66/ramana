@@ -221,7 +221,7 @@ export default function PrivacyPage() {
               </h3>
               <p className="text-gray-600 mb-6">
                 If you have questions about this privacy policy or how we handle
-                your data, please don't hesitate to contact us.
+                your data, please don&apos;t hesitate to contact us.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

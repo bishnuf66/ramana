@@ -159,7 +159,7 @@ export default function SearchPage() {
           {/* Results Count */}
           {hasSearched && (
             <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              Found {products.length} products for "{initialQuery}"
+              Found {products.length} products for &quot;{initialQuery}&quot;
             </div>
           )}
         </motion.div>

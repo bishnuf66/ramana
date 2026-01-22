@@ -48,8 +48,9 @@ function OrderFailureContent() {
           </h1>
 
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            We're sorry, but there was an issue processing your order. Please
-            try again or contact our support team if the problem persists.
+            We&apos;re sorry, but there was an issue processing your order.
+            Please try again or contact our support team if the problem
+            persists.
           </p>
 
           {/* Error Details */}
