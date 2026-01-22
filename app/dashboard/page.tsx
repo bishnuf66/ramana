@@ -164,7 +164,7 @@ export default function UserDashboard() {
   };
   useEffect(() => {
     loadUserData();
-  }, [loadUserData]);
+  }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
