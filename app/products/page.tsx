@@ -9,35 +9,10 @@ import ProductCard from "../../components/products/ProductCard";
 import ProductFiltersPanel from "../../components/products/ProductFiltersPanel";
 import { toast } from "react-toastify";
 import { useSearchParams } from "next/navigation";
+import { Tables } from "../../types/database.types";
 
-// Database Product interface
-interface DbProduct {
-  id: string;
-  title: string;
-  description: string | null;
-  price: number;
-  discount_price: number | null;
-  cover_image: string | null;
-  gallery_images: { url: string; title: string }[] | string[] | null;
-  rating: number | null;
-  category_id: string | null;
-  stock: number | null;
-  created_at: string;
-  updated_at: string;
-  image_url: string | null;
-}
-
-// Convert database product to frontend product format
-const convertDbProduct = (dbProduct: DbProduct): Product => ({
-  ...dbProduct,
-  galleryImages: Array.isArray(dbProduct.gallery_images)
-    ? dbProduct.gallery_images.map((img: any) =>
-        typeof img === "string" ? img : img.url,
-      )
-    : [],
-  mainImage: dbProduct.cover_image || dbProduct.image_url || undefined,
-  shortDescription: dbProduct.description || undefined,
-});
+// Use the generated Supabase type
+type DbProduct = Tables<"products">;
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
@@ -68,8 +43,7 @@ export default function ProductsPage() {
           return;
         }
 
-        const convertedProducts = (data as DbProduct[]).map(convertDbProduct);
-        setProducts(convertedProducts);
+        setProducts(data as Product[]);
       } catch (error) {
         console.error("Error:", error);
         toast.error("An error occurred while loading products");

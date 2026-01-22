@@ -37,17 +37,24 @@ export default function SearchPage() {
       // Transform API response to match Product interface
       const transformedProducts: Product[] = (data.products || []).map(
         (item: any) => ({
-          ...item,
-          created_at: item.created_at || new Date().toISOString(),
-          updated_at: item.updated_at || new Date().toISOString(),
-          gallery_images: item.galleryImages || [],
-          cover_image: item.image || "/placeholder.jpg",
-          category_id: item.category_id || null,
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          price: item.discount_price || item.price,
+          discount_price: item.discount_price,
+          originalPrice: item.price,
+          category: item.category || "Bouquet",
+          image: item.image || "/placeholder.jpg",
           stock: item.stock || 0,
           is_featured: item.isFeatured || false,
           rating: item.rating || null,
-          description: item.description || null,
-          discount_price: item.discount_price || null,
+          created_at: item.created_at || new Date().toISOString(),
+          updated_at: item.updated_at || new Date().toISOString(),
+          category_id: item.category_id || null,
+          cover_image: item.image || "/placeholder.jpg",
+          image_url: item.image || "/placeholder.jpg",
+          gallery_images: [],
+          is_active: true,
         }),
       );
 

@@ -21,35 +21,10 @@ import { useCart } from "../../../components/context/CartContext";
 import ProductCard from "../../../components/products/ProductCard";
 import ProductReviews from "../../../components/products/ProductReviews";
 import { Product } from "../../../types/product";
+import { Tables } from "../../../types/database.types";
 
-// Database Product interface
-interface DbProduct {
-  id: string;
-  title: string;
-  description: string | null;
-  price: number;
-  discount_price: number | null;
-  cover_image: string | null;
-  gallery_images: { url: string; title: string }[] | string[] | null;
-  rating: number | null;
-  category_id: string | null;
-  stock: number | null;
-  created_at: string;
-  updated_at: string;
-  image_url: string | null;
-}
-
-// Convert database product to frontend product format
-const convertDbProduct = (dbProduct: DbProduct): Product => ({
-  ...dbProduct,
-  galleryImages: Array.isArray(dbProduct.gallery_images)
-    ? dbProduct.gallery_images.map((img: any) =>
-        typeof img === "string" ? img : img.url,
-      )
-    : [],
-  mainImage: dbProduct.cover_image || dbProduct.image_url || undefined,
-  shortDescription: dbProduct.description || undefined,
-});
+// Use the generated Supabase type
+type DbProduct = Tables<"products">;
 
 export default function ProductPage() {
   const params = useParams();
@@ -80,8 +55,21 @@ export default function ProductPage() {
           return;
         }
 
-        const convertedProduct = convertDbProduct(data as DbProduct);
-        setProduct(convertedProduct);
+        const imageArray = Array.isArray(data.gallery_images)
+          ? data.gallery_images.map((img: any) =>
+              typeof img === "string" ? img : img.url,
+            )
+          : [];
+
+        // Transform to Product interface
+        const transformedProduct: Product = {
+          ...data,
+          galleryImages: imageArray,
+          mainImage: data.cover_image || data.image_url || undefined,
+          shortDescription: data.description || undefined,
+        };
+
+        setProduct(transformedProduct);
 
         // Fetch similar products (same category)
         const { data: similarData, error: similarError } = await supabase
@@ -92,10 +80,17 @@ export default function ProductPage() {
           .limit(4);
 
         if (!similarError && similarData) {
-          const convertedSimilar = (similarData as DbProduct[]).map(
-            convertDbProduct,
-          );
-          setSimilarProducts(convertedSimilar);
+          const transformedSimilar = similarData.map((item: any) => ({
+            ...item,
+            galleryImages: Array.isArray(item.gallery_images)
+              ? item.gallery_images.map((img: any) =>
+                  typeof img === "string" ? img : img.url,
+                )
+              : [],
+            mainImage: item.cover_image || item.image_url || undefined,
+            shortDescription: item.description || undefined,
+          }));
+          setSimilarProducts(transformedSimilar);
         }
       } catch (error) {
         console.error("Error:", error);

@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Our Flower Shop 🌸</title>
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+    <title>Welcome to Ramana Flower Shop 🌸</title>
     <style>
+        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -18,6 +20,7 @@
             background: linear-gradient(135deg, #fdf2f8 0%, #f0fdf4 50%, #fffef7 100%);
             min-height: 100vh;
             padding: 20px;
+            -webkit-font-smoothing: antialiased;
         }
         
         .email-container {
@@ -49,21 +52,12 @@
             opacity: 0.1;
         }
         
-        .header::after {
-            content: '🌸';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 48px;
-            opacity: 0.2;
-        }
-        
         .logo {
             color: white;
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 10px;
+            display: block;
         }
         
         .tagline {
@@ -107,6 +101,8 @@
             margin: 30px auto;
             display: block;
             max-width: 250px;
+            border: none;
+            cursor: pointer;
         }
         
         .confirmation-button:hover {
@@ -147,17 +143,20 @@
             font-size: 12px;
             color: #6b7280;
             margin-bottom: 15px;
+            line-height: 1.5;
         }
         
         .social-links {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 12px;
+            margin: 20px 0 30px;
+            flex-wrap: wrap;
         }
         
         .social-link {
-            width: 36px;
-            height: 36px;
+            width: 44px;
+            height: 44px;
             background: white;
             border-radius: 50%;
             display: flex;
@@ -166,30 +165,110 @@
             text-decoration: none;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            color: #374151;
+            font-size: 20px;
+            font-weight: 600;
         }
         
         .social-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
         
-        .flower-decoration {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
-            opacity: 0.6;
+        /* Platform-specific colors */
+        .social-link.facebook {
+            background: linear-gradient(135deg, #1877F2 0%, #0d63d3 100%);
+            color: white;
         }
         
-        .flower-1 {
-            top: 20px;
-            left: 20px;
+        .social-link.instagram {
+            background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+            color: white;
         }
         
-        .flower-2 {
-            bottom: 20px;
-            right: 20px;
+        .social-link.tiktok {
+            background: #000000;
+            color: white;
+        }
+        
+        .social-link.whatsapp {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+        }
+        
+        .social-link.phone {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+        
+        .social-link.email {
+            background: linear-gradient(135deg, #EA4335 0%, #d23a2e 100%);
+            color: white;
+        }
+        
+        .social-link:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+        }
+        
+        .contact-info {
+            margin: 20px 0;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        .contact-link {
+            color: #16a34a;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .contact-link:hover {
+            text-decoration: underline;
+        }
+        
+        .footer-links {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link {
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .footer-link:hover {
+            color: #16a34a;
+            text-decoration: underline;
+        }
+        
+        /* Decorative elements for email compatibility */
+        .floral-decoration {
+            text-align: center;
+            padding: 15px 0 20px;
+            font-size: 28px;
+            color: #22c55e;
+            opacity: 0.8;
+            background: linear-gradient(135deg, #fdf2f8 0%, #f0fdf4 100%);
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .contact-note {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
         }
         
         @media (max-width: 640px) {
@@ -209,20 +288,46 @@
             .confirmation-button {
                 padding: 14px 24px;
                 font-size: 14px;
+                max-width: 220px;
+            }
+            
+            .footer {
+                padding: 20px 15px;
+            }
+            
+            .social-links {
+                gap: 8px;
+            }
+            
+            .social-link {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .footer-links {
+                gap: 15px;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .footer-link {
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
     <div class="email-container">
-        <!-- Decorative Elements -->
-        <div class="flower-decoration flower-1"></div>
-        <div class="flower-decoration flower-2"></div>
+        <!-- Decorative Floral Elements -->
+        <div class="floral-decoration" role="presentation" aria-hidden="true">
+            🌸 🌺 🌷 🌼 💐 🌻
+        </div>
         
         <!-- Header -->
         <div class="header">
-            <div class="logo">� Ramana</div>
-            <div class="tagline">Handmade Bouquets Delivered</div>
+            <div class="logo">Ramana Handmade Collection</div>
+            <div class="tagline">Handcrafted Bouquets Delivered with Love</div>
         </div>
         
         <!-- Main Content -->
@@ -248,29 +353,64 @@
                     please ignore this email or contact our support team.
                 </div>
             </div>
+            
+            <!-- Contact Note -->
+            <div class="contact-note">
+                <strong>📱 Connect with us:</strong> Follow us on social media for daily flower inspiration, special offers, and behind-the-scenes looks at our handmade creations!
+            </div>
         </div>
         
         <!-- Footer -->
         <div class="footer">
-            <p class="footer-text">
-                Questions? Need help? We're here for you! �
-            </p>
-            
+            <!-- Social Links with Platform Icons -->
             <div class="social-links">
-                <a href="#" class="social-link">
-                    📧
+                <a href="https://www.facebook.com/profile.php?id=61587033144907" class="social-link facebook" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook" title="Facebook">
+                    f
                 </a>
-                <a href="#" class="social-link">
-                    🌐
+                <a href="https://www.instagram.com/_ramana_handmade_collection?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" class="social-link instagram" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Instagram" title="Instagram">
+                    IG
                 </a>
-                <a href="#" class="social-link">
-                    📱
+                <a href="https://www.tiktok.com/@handmadebyramana?is_from_webapp=1&sender_device=pc" class="social-link tiktok" target="_blank" rel="noopener noreferrer" aria-label="Follow us on TikTok" title="TikTok">
+                    TT
+                </a>
+                <a href="https://wa.me/9819274719" class="social-link whatsapp" target="_blank" rel="noopener noreferrer" aria-label="Message us on WhatsApp" title="WhatsApp">
+                    WA
+                </a>
+                <a href="tel:+9779819274719" class="social-link phone" aria-label="Call us" title="Phone">
+                    📞
+                </a>
+                <a href="mailto:ramanatheeng65@gmail.com" class="social-link email" aria-label="Email us" title="Email">
+                    ✉️
                 </a>
             </div>
             
-            <p class="footer-text" style="margin-top: 20px;">
-                © 2024 � Ramana - Handmade Bouquets. All rights reserved.<br>
-                Spreading joy, one handmade bouquet at a time.
+            <!-- Contact Information -->
+            <div class="contact-info">
+                <p><strong>💐 Need help? Contact us:</strong></p>
+                <p style="margin-top: 8px;">
+                    📞 <a href="tel:+9779819274719" class="contact-link">+977 9819274719</a> | 
+                    ✉️ <a href="mailto:ramanatheeng65@gmail.com" class="contact-link">ramanatheeng65@gmail.com</a>
+                </p>
+            </div>
+            
+            <!-- Footer Links -->
+            <div class="footer-links">
+                <a href="https://ramana.com.np" class="footer-link" target="_blank" rel="noopener noreferrer">
+                    <span style="font-size: 16px;">🌐</span> Visit our Website
+                </a>
+                <a href="https://ramana.com.np/terms" class="footer-link" target="_blank" rel="noopener noreferrer">
+                    <span style="font-size: 16px;">📄</span> Terms & Conditions
+                </a>
+                <a href="https://ramana.com.np/privacy" class="footer-link" target="_blank" rel="noopener noreferrer">
+                    <span style="font-size: 16px;">🔒</span> Privacy Policy
+                </a>
+            </div>
+            
+            <!-- Copyright -->
+            <p class="footer-text">
+                © 2026 Ramana Handmade Collection. All rights reserved.<br>
+                Spreading joy, one handmade bouquet at a time.<br>
+                Made with ❤️ in Nepal | Kathmandu, Nepal
             </p>
         </div>
     </div>
