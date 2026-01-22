@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, Grid, List } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -34,7 +34,24 @@ export default function SearchPage() {
       if (!response.ok) throw new Error("Search failed");
 
       const data = await response.json();
-      setProducts(data.products || []);
+      // Transform API response to match Product interface
+      const transformedProducts: Product[] = (data.products || []).map(
+        (item: any) => ({
+          ...item,
+          created_at: item.created_at || new Date().toISOString(),
+          updated_at: item.updated_at || new Date().toISOString(),
+          gallery_images: item.galleryImages || [],
+          cover_image: item.image || "/placeholder.jpg",
+          category_id: item.category_id || null,
+          stock: item.stock || 0,
+          is_featured: item.isFeatured || false,
+          rating: item.rating || null,
+          description: item.description || null,
+          discount_price: item.discount_price || null,
+        }),
+      );
+
+      setProducts(transformedProducts);
       setHasSearched(true);
     } catch (error) {
       console.error("Search error:", error);
@@ -68,18 +85,18 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
             Search Results
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300">
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300">
             Find the perfect bouquet for your special moment
           </p>
         </motion.div>
@@ -89,26 +106,26 @@ export default function SearchPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8"
         >
           <form
             onSubmit={handleSearchSubmit}
-            className="flex gap-4 items-center"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center"
           >
-            <div className="relative flex-1 max-w-2xl">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
                 placeholder="Search for bouquets..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full pl-10 pr-4 py-2.5 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors text-sm sm:text-base"
               />
             </div>
 
             <button
               type="submit"
-              className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm sm:text-base"
             >
               Search
             </button>
@@ -118,21 +135,23 @@ export default function SearchPage() {
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 ${viewMode === "grid" ? "bg-green-500 text-white" : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}
+                aria-label="Grid view"
               >
-                <Grid className="w-5 h-5" />
+                <Grid className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={`p-2 ${viewMode === "list" ? "bg-green-500 text-white" : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300"}`}
+                aria-label="List view"
               >
-                <List className="w-5 h-5" />
+                <List className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </form>
 
           {/* Results Count */}
           {hasSearched && (
-            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Found {products.length} products for "{initialQuery}"
             </div>
           )}
@@ -142,8 +161,10 @@ export default function SearchPage() {
         {loading && (
           <div className="flex items-center justify-center min-h-[40vh]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 dark:text-gray-400">Searching...</p>
+              <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+                Searching...
+              </p>
             </div>
           </div>
         )}
@@ -156,8 +177,8 @@ export default function SearchPage() {
             transition={{ delay: 0.2 }}
             className={
               viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                : "space-y-6"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+                : "space-y-4 sm:space-y-6"
             }
           >
             {products.map((product, index) => (
@@ -178,12 +199,16 @@ export default function SearchPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12"
+            className="text-center py-8 sm:py-12"
           >
             <div className="text-gray-400 dark:text-gray-500 mb-4">
-              <Search className="w-16 h-16 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No products found</h3>
-              <p>Try searching with different keywords</p>
+              <Search className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4" />
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">
+                No products found
+              </h3>
+              <p className="text-sm sm:text-base">
+                Try searching with different keywords
+              </p>
             </div>
           </motion.div>
         )}
@@ -193,12 +218,16 @@ export default function SearchPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12"
+            className="text-center py-8 sm:py-12"
           >
             <div className="text-gray-400 dark:text-gray-500 mb-4">
-              <Search className="w-16 h-16 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Start searching</h3>
-              <p>Enter keywords to find beautiful bouquets</p>
+              <Search className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4" />
+              <h3 className="text-lg sm:text-xl font-semibold mb-2">
+                Start searching
+              </h3>
+              <p className="text-sm sm:text-base">
+                Enter keywords to find beautiful bouquets
+              </p>
             </div>
           </motion.div>
         )}

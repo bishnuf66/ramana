@@ -144,7 +144,7 @@ export default function ProductSearch({
             onChange={handleInputChange}
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
-            className="w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+            className="w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors text-sm sm:text-base"
           />
 
           {/* Search Icon */}
@@ -152,8 +152,9 @@ export default function ProductSearch({
             type="button"
             onClick={handleSearchIconClick}
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            aria-label="Search"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Clear Button */}
@@ -162,8 +163,9 @@ export default function ProductSearch({
               type="button"
               onClick={handleClearSearch}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              aria-label="Clear search"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
         </div>
@@ -177,12 +179,12 @@ export default function ProductSearch({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50"
+            className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 sm:max-h-96 overflow-y-auto z-50"
           >
             {isLoading ? (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                <div className="inline-block w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
-                <span className="ml-2">Searching...</span>
+              <div className="p-3 sm:p-4 text-center text-gray-500 dark:text-gray-400">
+                <div className="inline-block w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 dark:border-gray-600 border-t-transparent rounded-full animate-spin" />
+                <span className="ml-2 text-sm sm:text-base">Searching...</span>
               </div>
             ) : results.length > 0 ? (
               <div className="py-2">
@@ -192,14 +194,14 @@ export default function ProductSearch({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.1 }}
-                    className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                    className="px-3 sm:px-4 py-2 sm:py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                     onClick={() => handleResultClick(product)}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <img
                         src={product.image}
                         alt={product.title}
-                        className="w-10 h-10 object-cover rounded"
+                        className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
                             "/placeholder.jpg";
@@ -210,7 +212,7 @@ export default function ProductSearch({
                           {product.title}
                         </h4>
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-0.5 rounded">
+                          <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">
                             {product.category}
                           </span>
                           <span className="font-medium">
@@ -223,7 +225,7 @@ export default function ProductSearch({
                 ))}
               </div>
             ) : query ? (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+              <div className="p-3 sm:p-4 text-center text-gray-500 dark:text-gray-400 text-sm sm:text-base">
                 No products found for "{query}"
               </div>
             ) : null}
@@ -233,7 +235,7 @@ export default function ProductSearch({
               <div className="border-t border-gray-200 dark:border-gray-700 p-2">
                 <button
                   onClick={handleSeeAllResults}
-                  className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors font-medium"
+                  className="w-full text-left px-3 sm:px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-colors font-medium"
                 >
                   See all results for "{query}"
                 </button>

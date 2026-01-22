@@ -180,13 +180,6 @@ export default function PremiumHeader() {
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 dark:bg-green-400 group-hover:w-full transition-all duration-300" />
               </Link>
               <Link
-                href="/search"
-                className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium transition-colors relative group"
-              >
-                Search
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 dark:bg-green-400 group-hover:w-full transition-all duration-300" />
-              </Link>
-              <Link
                 href="/about"
                 className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium transition-colors relative group"
               >
@@ -194,7 +187,7 @@ export default function PremiumHeader() {
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 dark:bg-green-400 group-hover:w-full transition-all duration-300" />
               </Link>
               <Link
-                href="#contact"
+                href="/contact"
                 className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium transition-colors relative group"
               >
                 Contact
@@ -408,13 +401,6 @@ export default function PremiumHeader() {
                   Blog
                 </Link>
                 <Link
-                  href="/search"
-                  className="block text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Search
-                </Link>
-                <Link
                   href="/about"
                   className="block text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium py-2"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -422,7 +408,7 @@ export default function PremiumHeader() {
                   About
                 </Link>
                 <Link
-                  href="#contact"
+                  href="/contact"
                   className="block text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium py-2"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
