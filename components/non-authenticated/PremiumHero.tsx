@@ -85,15 +85,21 @@ export default function PremiumHero() {
             >
               <div>
                 <div className="text-3xl font-bold text-green-600">500+</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Happy Customers</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Happy Customers
+                </div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-rose-600">1000+</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Arrangements</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Arrangements
+                </div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-green-600">4.9★</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Average Rating</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Average Rating
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -106,13 +112,13 @@ export default function PremiumHero() {
             className="relative"
           >
             <div className="relative z-10">
-              <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
+              <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
                 <Image
-                  src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+                  src="/images/hero-image.png"
                   alt="Premium Flower Arrangement"
                   width={400}
                   height={400}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-fit"
                 />
               </div>
               {/* Floating Badge */}
@@ -123,7 +129,9 @@ export default function PremiumHero() {
                 className="absolute -bottom-6 -left-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 glass"
               >
                 <div className="text-2xl font-bold text-green-600">50%</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">First Order</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  First Order
+                </div>
               </motion.div>
             </div>
           </motion.div>
