@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Search, Grid, List } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import ProductCard from "../../components/products/ProductCard";
 import { Product } from "../../types/product";
 import { toast } from "react-toastify";
 
-export default function SearchPage() {
+function SearchPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialQuery = searchParams.get("q") || "";
@@ -240,5 +240,19 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <SearchPageInner />
+    </Suspense>
   );
 }

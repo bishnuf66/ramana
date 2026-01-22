@@ -38,7 +38,7 @@ const CartPage: React.FC = () => {
     } else if (sortBy === "price") {
       comparison = a.price - b.price;
     } else if (sortBy === "quantity") {
-      comparison = a.quantity - b.quantity;
+      comparison = (a.quantity || 0) - (b.quantity || 0);
     }
     return sortOrder === "asc" ? comparison : -comparison;
   });
@@ -88,7 +88,7 @@ const CartPage: React.FC = () => {
                 >
                   <div className="flex flex-col items-center justify-center">
                     <Image
-                      src={item.image}
+                      src={item.mainImage || "/placeholder.jpg"}
                       alt={item.title}
                       width={64}
                       height={64}

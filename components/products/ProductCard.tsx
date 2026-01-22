@@ -26,7 +26,7 @@ export default function ProductCard({
       id: product.id,
       title: product.title,
       price: product.discount_price || product.price,
-      image: product.mainImage || product.image_url || "/placeholder.jpg",
+      mainImage: product.mainImage || product.image_url || "/placeholder.jpg",
       quantity: 1,
       rating: product.rating || 0,
     });

@@ -15,6 +15,7 @@ export interface Product extends Tables<"products"> {
   weight?: string;
   careInstructions?: string;
   reviewCount?: number;
+  quantity?: number;
 }
 
 export interface ProductWithCategory extends Product {

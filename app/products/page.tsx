@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Search, Filter, Grid, List, SortAsc, SortDesc } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -14,7 +14,7 @@ import { Tables } from "../../types/database.types";
 // Use the generated Supabase type
 type DbProduct = Tables<"products">;
 
-export default function ProductsPage() {
+function ProductsPageInner() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [filters, setFilters] = useState<ProductFilters>({});
@@ -323,5 +323,19 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <ProductsPageInner />
+    </Suspense>
   );
 }

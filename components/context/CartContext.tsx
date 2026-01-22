@@ -11,11 +11,16 @@ import React, {
 } from "react";
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
-import { ProductType } from "../types/ProductType";
+import { Product, ProductWithCategory } from "@/types/product";
 
 interface CartContextType {
-  cart: ProductType[];
-  addToCart: (product: ProductType) => void;
+  cart: Product[];
+  addToCart: (
+    product: Omit<Partial<Product>, "id"> & {
+      id: string | number;
+      quantity?: number;
+    },
+  ) => void;
   increaseQuantity: (id: number | string) => void;
   decreaseQuantity: (id: number | string) => void;
   removeFromCart: (id: number | string) => void;
@@ -29,7 +34,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [cart, setCart] = useState<ProductType[]>(() => {
+  const [cart, setCart] = useState<Product[]>(() => {
     if (typeof window !== "undefined") {
       const storedCart = localStorage.getItem("cart");
       return storedCart ? JSON.parse(storedCart) : [];
@@ -88,7 +93,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     if (typeof window === "undefined") return;
 
     if (!userId) {
-      const localCart: ProductType[] =
+      const localCart: Product[] =
         JSON.parse(localStorage.getItem("cart") || "[]") || [];
       setCart(localCart);
       setSynced(true);
@@ -96,7 +101,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     const sync = async () => {
-      const localCart: ProductType[] =
+      const localCart: Product[] =
         JSON.parse(localStorage.getItem("cart") || "[]") || [];
 
       const { data: remoteRow, error } = await supabase
@@ -111,18 +116,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      const remoteCart: ProductType[] = remoteRow?.items || [];
+      const remoteCart: Product[] = remoteRow?.items || [];
 
-      const map = new Map<string | number, ProductType>();
+      const map = new Map<string | number, Product>();
       [...remoteCart, ...localCart].forEach((item) => {
         const existing = map.get(item.id);
         if (existing) {
           map.set(item.id, {
             ...existing,
-            quantity: existing.quantity + item.quantity,
+            quantity: (existing.quantity || 0) + (item.quantity || 0),
           });
         } else {
-          map.set(item.id, item);
+          map.set(item.id, {
+            ...item,
+            quantity: item.quantity || 0,
+          });
         }
       });
       const resolved = Array.from(map.values());
@@ -142,25 +150,39 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     sync();
   }, [userId]);
 
-  const addToCart = useCallback((product: ProductType) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + product.quantity }
-            : item,
-        );
-      }
-      return [...prevCart, product];
-    });
-    toast.success(`${product.title} added to cart`);
-  }, []);
+  const addToCart = useCallback(
+    (
+      product: Omit<Partial<Product>, "id"> & {
+        id: string | number;
+        quantity?: number;
+      },
+    ) => {
+      setCart((prevCart) => {
+        const existingItem = prevCart.find((item) => item.id === product.id);
+        if (existingItem) {
+          return prevCart.map((item) =>
+            item.id === product.id
+              ? {
+                  ...item,
+                  quantity: (item.quantity || 0) + (product.quantity || 1),
+                }
+              : item,
+          );
+        }
+        return [
+          ...prevCart,
+          { ...product, quantity: product.quantity || 1 } as Product,
+        ];
+      });
+      toast.success(`${product.title} added to cart`);
+    },
+    [],
+  );
 
   const increaseQuantity = useCallback((id: number | string) => {
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
+        item.id === id ? { ...item, quantity: (item.quantity || 0) + 1 } : item,
       ),
     );
     toast.success("Quantity increased");
@@ -170,9 +192,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     setCart((prevCart) =>
       prevCart
         .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item,
+          item.id === id
+            ? { ...item, quantity: (item.quantity || 0) - 1 }
+            : item,
         )
-        .filter((item) => item.quantity > 0),
+        .filter((item) => (item.quantity || 0) > 0),
     );
     toast.success("Quantity decreased");
   }, []);
@@ -188,11 +212,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const getTotalPrice = useCallback(() => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cart.reduce(
+      (total, item) => total + item.price * (item.quantity || 0),
+      0,
+    );
   }, [cart]);
 
   const getTotalItems = useCallback(() => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
+    return cart.reduce((total, item) => total + (item.quantity || 0), 0);
   }, [cart]);
 
   const value = useMemo(

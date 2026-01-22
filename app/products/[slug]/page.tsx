@@ -142,12 +142,9 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     addToCart({
-      id: product.id,
-      title: product.title,
+      ...product,
+      quantity,
       price: product.discount_price || product.price,
-      image: product.mainImage || product.image_url || "/placeholder.jpg",
-      quantity: quantity,
-      rating: product.rating || 0,
     });
   };
 
