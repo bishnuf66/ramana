@@ -1,9 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Heart, ShoppingCart, Star, Eye, MessageCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Heart,
+  ShoppingCart,
+  Star,
+  Eye,
+  MessageCircle,
+  Sparkles,
+  Gift,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { Product } from "../../types/product";
 import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
@@ -20,6 +29,7 @@ export default function ProductCard({
 }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleAddToCart = () => {
     addToCart({
@@ -72,93 +82,199 @@ Thank you! 🌸`;
   if (viewMode === "list") {
     return (
       <motion.div
-        whileHover={{ y: -2 }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{
+          y: -3,
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+        }}
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+        className="group relative bg-gradient-to-br from-white to-rose-50/30 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-xl overflow-hidden border border-rose-100/50 dark:border-gray-700/50 backdrop-blur-sm"
       >
-        <div className="flex">
-          {/* Image */}
-          <div className="relative w-48 h-48 flex-shrink-0">
-            <Image
-              src={product.cover_image || "/placeholder.jpg"}
-              alt={product.title}
-              fill
-              className="object-cover"
-            />
-            {discountPercentage > 0 && (
-              <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                -{discountPercentage}%
-              </div>
-            )}
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-200/20 to-pink-200/20 dark:from-rose-900/20 dark:to-pink-900/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-purple-200/20 to-rose-200/20 dark:from-purple-900/20 dark:to-rose-900/20 rounded-full blur-3xl" />
+
+        <div className="relative flex">
+          {/* Image Section */}
+          <div className="relative w-64 h-64 flex-shrink-0 overflow-hidden">
+            <motion.div
+              animate={{ scale: isHovered ? 1.1 : 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="w-full h-full"
+            >
+              <Image
+                src={product.cover_image || "/placeholder.jpg"}
+                alt={product.title}
+                fill
+                className="object-cover"
+              />
+            </motion.div>
+
+            {/* Badges */}
+            <AnimatePresence>
+              {discountPercentage > 0 && (
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  exit={{ scale: 0, rotate: 180 }}
+                  className="absolute top-4 left-4 bg-gradient-to-br from-rose-500 to-pink-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {discountPercentage}% OFF
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Handmade Badge */}
+            <motion.div
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="absolute bottom-4 left-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5 border border-rose-200 dark:border-rose-800"
+            >
+              <Gift className="w-3 h-3" />
+              Handmade
+            </motion.div>
+
             {!(product.stock && product.stock > 0) && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <span className="text-white font-bold">Out of Stock</span>
-              </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40 backdrop-blur-sm flex items-center justify-center"
+              >
+                <div className="bg-white/95 dark:bg-gray-800/95 px-6 py-3 rounded-full">
+                  <span className="text-gray-900 dark:text-white font-bold text-sm">
+                    Out of Stock
+                  </span>
+                </div>
+              </motion.div>
             )}
+
+            {/* Floating Sparkles on Hover */}
+            <AnimatePresence>
+              {isHovered && (
+                <>
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    className="absolute top-1/4 right-4 text-yellow-400"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                  </motion.div>
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="absolute top-1/2 right-8 text-pink-400"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                  </motion.div>
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="absolute top-1/3 right-12 text-rose-400"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 p-6">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                  {product.category?.name || "Uncategorized"}
-                </span>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          {/* Content Section */}
+          <div className="relative flex-1 p-6">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30 px-2.5 py-1 rounded-full">
+                    {product.category?.name || "Special Gift"}
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-rose-800 dark:from-white dark:to-rose-300 bg-clip-text text-transparent mb-2">
                   {product.title}
                 </h3>
               </div>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={handleFavorite}
-                className={`p-2 transition-colors ${
+                className={`relative p-2.5 rounded-full transition-all ${
                   isFavorite(product.id)
-                    ? "text-red-500 hover:text-red-600"
-                    : "text-gray-400 hover:text-red-500"
+                    ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
+                    : "bg-gray-100 dark:bg-gray-700/50 text-gray-400 hover:text-rose-500 dark:hover:text-rose-400"
                 }`}
               >
                 <Heart
                   className={`w-5 h-5 ${isFavorite(product.id) ? "fill-current" : ""}`}
                 />
-              </button>
+                {isFavorite(product.id) && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: [0, 1.2, 1] }}
+                    className="absolute inset-0 bg-rose-400 rounded-full -z-10 blur-md"
+                  />
+                )}
+              </motion.button>
             </div>
 
-            <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+            <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 leading-relaxed">
               {product.shortDescription || product.description}
             </p>
 
             {/* Rating */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
-                  <Star
+                  <motion.div
                     key={i}
-                    className={`w-4 h-4 ${
-                      i < Math.floor(product.rating || 0)
-                        ? "text-yellow-400 fill-current"
-                        : "text-gray-300 dark:text-gray-600"
-                    }`}
-                  />
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    <Star
+                      className={`w-4 h-4 ${
+                        i < Math.floor(product.rating || 0)
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300 dark:text-gray-600"
+                      }`}
+                    />
+                  </motion.div>
                 ))}
               </div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                 {(product.rating || 0).toFixed(1)} ({product.reviewCount || 0}{" "}
                 reviews)
               </span>
             </div>
 
             {/* Price and Actions */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="flex items-end justify-between">
+              <div className="flex flex-col gap-1">
                 {product.discount_price ? (
                   <>
-                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      NPR {product.discount_price.toLocaleString()}
-                    </span>
-                    <span className="text-lg text-gray-500 line-through">
-                      NPR {product.price.toLocaleString()}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 dark:from-rose-400 dark:to-pink-400 bg-clip-text text-transparent">
+                        NPR {product.discount_price.toLocaleString()}
+                      </span>
+                      <span className="text-lg text-gray-400 line-through">
+                        NPR {product.price.toLocaleString()}
+                      </span>
+                    </div>
+                    <span className="text-xs text-green-600 dark:text-green-400 font-semibold">
+                      You save NPR{" "}
+                      {(
+                        product.price - product.discount_price
+                      ).toLocaleString()}
                     </span>
                   </>
                 ) : (
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <span className="text-3xl font-bold text-gray-900 dark:text-white">
                     NPR {product.price.toLocaleString()}
                   </span>
                 )}
@@ -166,32 +282,38 @@ Thank you! 🌸`;
 
               <div className="flex items-center gap-2">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.05, rotate: 5 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleWhatsAppOrder}
-                  className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="group/btn relative p-3 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:shadow-green-500/50 transition-all overflow-hidden"
                   title="Order via WhatsApp"
                 >
-                  <MessageCircle className="w-5 h-5" />
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform" />
+                  <MessageCircle className="w-5 h-5 relative z-10" />
                 </motion.button>
+
                 <Link href={`/products/${product.id}`}>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    className="p-3 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:shadow-lg transition-all"
                   >
                     <Eye className="w-5 h-5" />
                   </motion.button>
                 </Link>
+
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleAddToCart}
                   disabled={!(product.stock && product.stock > 0)}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                  className="relative px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl hover:shadow-lg hover:shadow-rose-500/50 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all flex items-center gap-2 overflow-hidden group/cart"
                 >
-                  <ShoppingCart className="w-4 h-4" />
-                  Add to Cart
+                  <div className="absolute inset-0 bg-white/20 translate-x-full group-hover/cart:translate-x-0 transition-transform duration-300" />
+                  <ShoppingCart className="w-5 h-5 relative z-10" />
+                  <span className="font-semibold relative z-10">
+                    Add to Cart
+                  </span>
                 </motion.button>
               </div>
             </div>
@@ -201,119 +323,232 @@ Thank you! 🌸`;
     );
   }
 
+  // Grid View
   return (
     <motion.div
-      whileHover={{ y: -5 }}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -8 }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      className="group relative bg-gradient-to-br from-white to-rose-50/30 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden border border-rose-100/50 dark:border-gray-700/50 transition-all duration-300"
     >
-      {/* Image */}
-      <div className="relative aspect-square">
-        <Image
-          src={product.cover_image || "/placeholder.jpg"}
-          alt={product.title}
-          fill
-          className="object-cover"
+      {/* Decorative Gradient Orbs */}
+      <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-rose-200/30 to-pink-200/30 dark:from-rose-900/20 dark:to-pink-900/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+      <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-tr from-purple-200/30 to-rose-200/30 dark:from-purple-900/20 dark:to-rose-900/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+
+      {/* Image Section */}
+      <div className="relative aspect-square overflow-hidden">
+        <motion.div
+          animate={{ scale: isHovered ? 1.15 : 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="w-full h-full"
+        >
+          <Image
+            src={product.cover_image || "/placeholder.jpg"}
+            alt={product.title}
+            fill
+            className="object-cover"
+          />
+        </motion.div>
+
+        {/* Overlay Gradient on Hover */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered ? 1 : 0 }}
+          className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"
         />
-        {discountPercentage > 0 && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-            -{discountPercentage}%
-          </div>
-        )}
-        <button
+
+        {/* Discount Badge */}
+        <AnimatePresence>
+          {discountPercentage > 0 && (
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180 }}
+              className="absolute top-3 left-3 bg-gradient-to-br from-rose-500 to-pink-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1"
+            >
+              <Sparkles className="w-3 h-3" />
+              {discountPercentage}%
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Handmade Badge */}
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="absolute top-3 right-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1 border border-rose-200 dark:border-rose-800"
+        >
+          <Gift className="w-3 h-3" />
+          <span className="hidden sm:inline">Handmade</span>
+        </motion.div>
+
+        {/* Favorite Button */}
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleFavorite}
-          className={`absolute top-2 right-2 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg transition-colors ${
+          className={`absolute bottom-3 right-3 p-2 rounded-full shadow-lg backdrop-blur-sm transition-all ${
             isFavorite(product.id)
-              ? "text-red-500 hover:text-red-600"
-              : "text-gray-400 hover:text-red-500"
+              ? "bg-rose-500 text-white"
+              : "bg-white/95 dark:bg-gray-800/95 text-gray-400 hover:text-rose-500"
           }`}
         >
           <Heart
             className={`w-4 h-4 ${isFavorite(product.id) ? "fill-current" : ""}`}
           />
-        </button>
+        </motion.button>
+
+        {/* Out of Stock Overlay */}
         {!(product.stock && product.stock > 0) && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <span className="text-white font-bold">Out of Stock</span>
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/40 backdrop-blur-sm flex items-center justify-center"
+          >
+            <div className="bg-white/95 dark:bg-gray-800/95 px-4 py-2 rounded-full">
+              <span className="text-gray-900 dark:text-white font-bold text-sm">
+                Out of Stock
+              </span>
+            </div>
+          </motion.div>
         )}
+
+        {/* Floating Sparkles on Hover */}
+        <AnimatePresence>
+          {isHovered && (
+            <>
+              {[...Array(4)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ scale: 0, opacity: 0, y: 0 }}
+                  animate={{
+                    scale: 1,
+                    opacity: [0, 1, 0],
+                    y: -30,
+                    x: [0, i % 2 === 0 ? 10 : -10],
+                  }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{
+                    delay: i * 0.1,
+                    duration: 1.5,
+                    repeat: Infinity,
+                    repeatDelay: 0.5,
+                  }}
+                  className="absolute"
+                  style={{
+                    top: `${30 + i * 15}%`,
+                    right: `${20 + i * 10}%`,
+                  }}
+                >
+                  <Sparkles
+                    className={`w-3 h-3 ${i % 3 === 0 ? "text-yellow-400" : i % 3 === 1 ? "text-pink-400" : "text-rose-400"}`}
+                  />
+                </motion.div>
+              ))}
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Content */}
-      <div className="p-4">
-        <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-          {product.category?.name || "Uncategorized"}
-        </span>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+      {/* Content Section */}
+      <div className="relative p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-full">
+            {product.category?.name || "Special Gift"}
+          </span>
+        </div>
+
+        <h3 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-rose-800 dark:from-white dark:to-rose-300 bg-clip-text text-transparent mb-2 line-clamp-2 min-h-[3.5rem]">
           {product.title}
         </h3>
 
         {/* Rating */}
         <div className="flex items-center gap-2 mb-3">
-          <div className="flex items-center">
+          <div className="flex items-center gap-0.5">
             {[...Array(5)].map((_, i) => (
-              <Star
+              <motion.div
                 key={i}
-                className={`w-4 h-4 ${
-                  i < Math.floor(product.rating || 0)
-                    ? "text-yellow-400 fill-current"
-                    : "text-gray-300 dark:text-gray-600"
-                }`}
-              />
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Star
+                  className={`w-3.5 h-3.5 ${
+                    i < Math.floor(product.rating || 0)
+                      ? "text-yellow-400 fill-current"
+                      : "text-gray-300 dark:text-gray-600"
+                  }`}
+                />
+              </motion.div>
             ))}
           </div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
             ({product.reviewCount || 0})
           </span>
         </div>
 
         {/* Price */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex flex-col gap-1 mb-4">
           {product.discount_price ? (
             <>
-              <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                NPR {product.discount_price.toLocaleString()}
-              </span>
-              <span className="text-sm text-gray-500 line-through">
-                NPR {product.price.toLocaleString()}
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 dark:from-rose-400 dark:to-pink-400 bg-clip-text text-transparent">
+                  NPR {product.discount_price.toLocaleString()}
+                </span>
+                <span className="text-sm text-gray-400 line-through">
+                  NPR {product.price.toLocaleString()}
+                </span>
+              </div>
+              <span className="text-xs text-green-600 dark:text-green-400 font-semibold">
+                Save NPR{" "}
+                {(product.price - product.discount_price).toLocaleString()}
               </span>
             </>
           ) : (
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">
               NPR {product.price.toLocaleString()}
             </span>
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleWhatsAppOrder}
-            className="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-            title="Order via WhatsApp"
-          >
-            <MessageCircle className="w-4 h-4" />
-            WhatsApp
-          </motion.button>
-          <Link href={`/products/${product.id}`} className="flex-1">
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleWhatsAppOrder}
+              className="flex-1 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg hover:shadow-green-500/30 transition-all flex items-center justify-center gap-2 font-semibold text-sm"
+              title="Order via WhatsApp"
             >
-              View Details
+              <MessageCircle className="w-4 h-4" />
+              WhatsApp
             </motion.button>
-          </Link>
+
+            <Link href={`/products/${product.id}`} className="flex-1">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="w-full py-2.5 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:shadow-lg transition-all font-semibold text-sm"
+              >
+                View Details
+              </motion.button>
+            </Link>
+          </div>
+
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={handleAddToCart}
             disabled={!(product.stock && product.stock > 0)}
-            className="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl hover:shadow-lg hover:shadow-rose-500/30 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 font-semibold text-sm relative overflow-hidden group/add"
           >
-            <ShoppingCart className="w-4 h-4" />
-            Cart
+            <div className="absolute inset-0 bg-white/20 translate-x-full group-hover/add:translate-x-0 transition-transform duration-300" />
+            <ShoppingCart className="w-4 h-4 relative z-10" />
+            <span className="relative z-10">Add to Cart</span>
           </motion.button>
         </div>
       </div>
