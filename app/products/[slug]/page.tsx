@@ -20,11 +20,10 @@ import { toast } from "react-toastify";
 import { useCart } from "../../../components/context/CartContext";
 import ProductCard from "../../../components/products/ProductCard";
 import ProductReviews from "../../../components/products/ProductReviews";
-import { Product } from "../../../types/product";
 import { Tables } from "../../../types/database.types";
 
 // Use the generated Supabase type
-type DbProduct = Tables<"products">;
+type Product = Tables<"products">;
 
 export default function ProductPage() {
   const params = useParams();
