@@ -78,3 +78,19 @@ export const signOut = async () => {
     throw error;
   }
 };
+
+// Reset Password
+export const resetPassword = async (email: string) => {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error: any) {
+    toast.error(error.message || "Failed to send reset email");
+    throw error;
+  }
+};
