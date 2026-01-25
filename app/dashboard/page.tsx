@@ -25,6 +25,7 @@ import { toast } from "react-toastify";
 import Image from "next/image";
 import { useCart } from "@/components/context/CartContext";
 import { useFavorites } from "@/components/context/FavoritesContext";
+import ProfileSetting from "@/components/dashboard/ProfileSetting";
 
 interface UserProfile {
   id: string;
@@ -78,12 +79,6 @@ export default function UserDashboard() {
       comment: "",
     },
   );
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({
-    full_name: "",
-    phone: "",
-    address: "",
-  });
   const loadUserData = async () => {
     try {
       setLoading(true);
@@ -112,11 +107,6 @@ export default function UserDashboard() {
       };
 
       setUser(userProfile);
-      setProfileForm({
-        full_name: userProfile.full_name || "",
-        phone: userProfile.phone || "",
-        address: userProfile.address || "",
-      });
 
       // Load user orders
       const { data: ordersData, error: ordersError } = await supabase
@@ -165,40 +155,6 @@ export default function UserDashboard() {
   useEffect(() => {
     loadUserData();
   }, []);
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-      if (!authUser) return;
-
-      // Update auth metadata directly
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          full_name: profileForm.full_name,
-          phone: profileForm.phone,
-          address: profileForm.address,
-          avatar_url: user?.avatar_url,
-        },
-      });
-
-      if (error) throw error;
-
-      toast.success("Profile updated successfully!");
-      setEditingProfile(false);
-
-      // Force refresh by waiting a moment then reloading
-      setTimeout(() => {
-        loadUserData();
-      }, 500);
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -750,165 +706,7 @@ export default function UserDashboard() {
 
             {/* Profile Tab */}
             {activeTab === "profile" && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-lg p-6"
-              >
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Profile Settings
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={loadUserData}
-                      className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      title="Refresh profile data"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setEditingProfile(!editingProfile)}
-                      className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <Edit className="w-4 h-4" />
-                      {editingProfile ? "Cancel" : "Edit Profile"}
-                    </button>
-                  </div>
-                </div>
-
-                {editingProfile ? (
-                  <form onSubmit={handleUpdateProfile} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        value={profileForm.full_name}
-                        onChange={(e) =>
-                          setProfileForm((prev) => ({
-                            ...prev,
-                            full_name: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Phone
-                      </label>
-                      <input
-                        type="tel"
-                        value={profileForm.phone}
-                        onChange={(e) =>
-                          setProfileForm((prev) => ({
-                            ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Address
-                      </label>
-                      <textarea
-                        value={profileForm.address}
-                        onChange={(e) =>
-                          setProfileForm((prev) => ({
-                            ...prev,
-                            address: e.target.value,
-                          }))
-                        }
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                      >
-                        Save Changes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingProfile(false)}
-                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Email
-                        </p>
-                        <p className="text-gray-900 dark:text-white">
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                    {user.full_name && (
-                      <div className="flex items-center gap-3">
-                        <User className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Full Name
-                          </p>
-                          <p className="text-gray-900 dark:text-white">
-                            {user.full_name}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {user.phone && (
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Phone
-                          </p>
-                          <p className="text-gray-900 dark:text-white">
-                            {user.phone}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {user.address && (
-                      <div className="flex items-center gap-3">
-                        <MapPin className="w-5 h-5 text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Address
-                          </p>
-                          <p className="text-gray-900 dark:text-white">
-                            {user.address}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <Calendar className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Member Since
-                        </p>
-                        <p className="text-gray-900 dark:text-white">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
+              <ProfileSetting user={user} loadUserData={loadUserData} />
             )}
           </div>
         </div>
