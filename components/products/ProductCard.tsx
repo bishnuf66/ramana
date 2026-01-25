@@ -13,7 +13,10 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Product } from "../../types/product";
+import { Tables } from "../../types/database.types";
+
+// Use the generated Supabase type
+type Product = Tables<"products">;
 import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { SocialLink } from "../../utils/social-link";
@@ -38,7 +41,7 @@ export default function ProductCard({
       price: product.discount_price || product.price,
       cover_image: product.cover_image || "/placeholder.jpg",
       quantity: 1,
-      rating: product.rating || 0,
+      rating: 0,
     });
   };
 
@@ -49,8 +52,8 @@ export default function ProductCard({
       title: product.title,
       price: product.price,
       image: product.cover_image || "/placeholder.jpg",
-      rating: product.rating || 0,
-      category: product.category?.name || "",
+      rating: 0,
+      category: "Uncategorized",
       addedAt: new Date().toISOString(),
     });
   };
@@ -61,7 +64,7 @@ export default function ProductCard({
     const message = `Hello! I'd like to order:
     
 *${product.title}*
-${product.shortDescription || product.description || ""}
+${product.description || ""}
 ${product.discount_price ? `\n*Discount Price:* NPR ${product.discount_price.toLocaleString()}` : `\n*Price:* NPR ${product.price.toLocaleString()}`}
 
 Please let me know the availability and delivery details.
@@ -193,7 +196,7 @@ Thank you! 🌸`;
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30 px-2.5 py-1 rounded-full">
-                    {product.category?.name || "Special Gift"}
+                    {"Special Gift"}
                   </span>
                 </div>
                 <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-rose-800 dark:from-white dark:to-rose-300 bg-clip-text text-transparent mb-2">
@@ -224,7 +227,7 @@ Thank you! 🌸`;
             </div>
 
             <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2 leading-relaxed">
-              {product.shortDescription || product.description}
+              {product.description}
             </p>
 
             {/* Rating */}
@@ -239,7 +242,7 @@ Thank you! 🌸`;
                   >
                     <Star
                       className={`w-4 h-4 ${
-                        i < Math.floor(product.rating || 0)
+                        i < 0
                           ? "text-yellow-400 fill-current"
                           : "text-gray-300 dark:text-gray-600"
                       }`}
@@ -248,8 +251,7 @@ Thank you! 🌸`;
                 ))}
               </div>
               <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                {(product.rating || 0).toFixed(1)} ({product.reviewCount || 0}{" "}
-                reviews)
+                0.0 (0 reviews)
               </span>
             </div>
 
@@ -292,7 +294,7 @@ Thank you! 🌸`;
                   <MessageCircle className="w-5 h-5 relative z-10" />
                 </motion.button>
 
-                <Link href={`/products/${product.id}`}>
+                <Link href={`/products/${product.slug}`}>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -457,7 +459,7 @@ Thank you! 🌸`;
       <div className="relative p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-full">
-            {product.category?.name || "Special Gift"}
+            {"Special Gift"}
           </span>
         </div>
 
@@ -477,7 +479,7 @@ Thank you! 🌸`;
               >
                 <Star
                   className={`w-3.5 h-3.5 ${
-                    i < Math.floor(product.rating || 0)
+                    i < 0
                       ? "text-yellow-400 fill-current"
                       : "text-gray-300 dark:text-gray-600"
                   }`}
@@ -486,7 +488,7 @@ Thank you! 🌸`;
             ))}
           </div>
           <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-            ({product.reviewCount || 0})
+            (0)
           </span>
         </div>
 
@@ -528,7 +530,7 @@ Thank you! 🌸`;
               WhatsApp
             </motion.button>
 
-            <Link href={`/products/${product.id}`} className="flex-1">
+            <Link href={`/products/${product.slug}`} className="flex-1">
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}

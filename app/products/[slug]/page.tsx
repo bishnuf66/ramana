@@ -46,7 +46,7 @@ export default function ProductPage() {
         const { data, error } = await supabase
           .from("products")
           .select("*")
-          .eq("id", params.slug as string)
+          .eq("slug", params.slug as string)
           .single();
 
         if (error || !data) {
@@ -63,7 +63,6 @@ export default function ProductPage() {
         // Transform to Product interface
         const transformedProduct: Product = {
           ...data,
-          galleryImages: imageArray,
           mainImage: data.cover_image || data.image_url || undefined,
           shortDescription: data.description || undefined,
         };
@@ -81,13 +80,6 @@ export default function ProductPage() {
         if (!similarError && similarData) {
           const transformedSimilar = similarData.map((item: any) => ({
             ...item,
-            galleryImages: Array.isArray(item.gallery_images)
-              ? item.gallery_images.map((img: any) =>
-                  typeof img === "string" ? img : img.url,
-                )
-              : [],
-            mainImage: item.cover_image || item.image_url || undefined,
-            shortDescription: item.description || undefined,
           }));
           setSimilarProducts(transformedSimilar);
         }
@@ -172,8 +164,9 @@ export default function ProductPage() {
             <div className="relative aspect-square rounded-lg overflow-hidden bg-white dark:bg-gray-800">
               <Image
                 src={
-                  product.galleryImages?.[selectedImageIndex] ||
-                  "/placeholder.jpg"
+                  (product.gallery_images as string[] | null)?.[
+                    selectedImageIndex
+                  ] || "/placeholder.jpg"
                 }
                 alt={product.title}
                 fill
@@ -195,24 +188,26 @@ export default function ProductPage() {
 
             {/* Thumbnail Images */}
             <div className="flex gap-2 overflow-x-auto">
-              {product.galleryImages?.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
-                    selectedImageIndex === index
-                      ? "border-green-500"
-                      : "border-gray-200 dark:border-gray-700"
-                  }`}
-                >
-                  <Image
-                    src={image}
-                    alt={`${product.title} ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </button>
-              ))}
+              {(product.gallery_images as string[] | null)?.map(
+                (image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
+                      selectedImageIndex === index
+                        ? "border-green-500"
+                        : "border-gray-200 dark:border-gray-700"
+                    }`}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${product.title} ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </button>
+                ),
+              )}
             </div>
           </motion.div>
 
@@ -242,7 +237,7 @@ export default function ProductPage() {
                   <Star
                     key={i}
                     className={`w-5 h-5 ${
-                      i < Math.floor(product.rating || 0)
+                      i < 0
                         ? "text-yellow-400 fill-current"
                         : "text-gray-300 dark:text-gray-600"
                     }`}
@@ -250,8 +245,7 @@ export default function ProductPage() {
                 ))}
               </div>
               <span className="text-gray-600 dark:text-gray-400">
-                {(product.rating || 0).toFixed(1)} ({product.reviewCount || 0}{" "}
-                reviews)
+                0.0 (0 reviews)
               </span>
             </div>
 
@@ -282,31 +276,12 @@ export default function ProductPage() {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Description
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                {product.description}
-              </p>
-            </div>
-
-            {/* Features */}
-            <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                Features
+                Description
               </h3>
-              <ul className="space-y-2">
-                {product.features?.map((feature, index) => (
-                  <li
-                    key={index}
-                    className="flex items-center gap-2 text-gray-600 dark:text-gray-300"
-                  >
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    {feature}
-                  </li>
-                )) || (
-                  <li className="text-gray-500 dark:text-gray-400">
-                    No features listed
-                  </li>
-                )}
-              </ul>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                {product.description || "No description available."}
+              </p>
             </div>
 
             {/* Quantity & Add to Cart */}
@@ -359,40 +334,56 @@ export default function ProductPage() {
             </div>
 
             {/* Product Details */}
-            <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-              {product.dimensions && (
-                <div>
+            <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Product Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {product.height_cm && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Height:
+                    </span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {product.height_cm} cm
+                    </p>
+                  </div>
+                )}
+                {product.width_cm && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Width:
+                    </span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {product.width_cm} cm
+                    </p>
+                  </div>
+                )}
+                {product.weight_gram && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Weight:
+                    </span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {product.weight_gram} g
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Combined Dimensions */}
+              {product.height_cm && product.width_cm && (
+                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Dimensions:
                   </span>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {product.dimensions}
-                  </p>
-                </div>
-              )}
-              {product.weight && (
-                <div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Weight:
-                  </span>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {product.weight}
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {product.height_cm} cm (H) × {product.width_cm} cm (W)
+                    {product.length_cm ? ` × ${product.length_cm} cm (L)` : ""}
                   </p>
                 </div>
               )}
             </div>
-
-            {/* Care Instructions */}
-            {product.careInstructions && (
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">
-                  Care Instructions
-                </h4>
-                <p className="text-sm text-green-700 dark:text-green-300">
-                  {product.careInstructions}
-                </p>
-              </div>
-            )}
           </motion.div>
         </div>
 
