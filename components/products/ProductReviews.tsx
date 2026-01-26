@@ -14,11 +14,24 @@ import {
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
-import {
-  ProductReview,
-  ReviewFormData,
-  ReviewFilters,
-} from "../../types/review";
+import { Tables } from "@/types/database.types";
+
+// Use the generated Supabase types
+type ProductReview = Tables<"product_reviews">;
+
+// Define the missing types locally
+interface ReviewFormData {
+  rating: number;
+  comment: string;
+  reviewImages: File[];
+}
+
+interface ReviewFilters {
+  rating?: number;
+  hasImages?: boolean;
+  verified?: boolean;
+  sortBy?: "newest" | "oldest" | "highest" | "lowest" | "most-helpful";
+}
 
 interface ProductReviewsProps {
   productId: string;
@@ -46,6 +59,11 @@ export default function ProductReviews({
     reviewImages: [],
   });
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  // Fetch reviews on component mount and when dependencies change
+  useEffect(() => {
+    fetchReviews();
+  }, [productId, filters]);
 
   // Fetch reviews function
   const fetchReviews = async () => {
@@ -93,31 +111,16 @@ export default function ProductReviews({
 
       if (error) throw error;
 
-      const convertedReviews: ProductReview[] = (data || []).map((review) => ({
-        id: review.id,
-        productId: review.product_id,
-        userId: review.user_id,
-        userName: review.user_name,
-        userEmail: review.user_email,
-        rating: review.rating,
-        comment: review.comment || "",
-        reviewImages: review.review_images || [],
-        isVerified: review.is_verified,
-        helpfulCount: review.helpful_count || 0,
-        likeCount: review.like_count || 0,
-        dislikeCount: review.dislike_count || 0,
-        createdAt: review.created_at,
-        updatedAt: review.updated_at,
-      }));
-
-      setReviews(convertedReviews);
+      setReviews(data || []);
 
       // Check if current user has already reviewed
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        const userReview = convertedReviews.find((r) => r.userId === user.id);
+        const userReview = (data || []).find(
+          (r: ProductReview) => r.user_id === user.id,
+        );
         setUserReview(userReview || null);
       }
     } catch (error) {
@@ -183,6 +186,61 @@ export default function ProductReviews({
         return;
       }
 
+      // Check if user has purchased this product and it's been delivered
+      const { data: orders, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("status", "delivered");
+
+      if (orderError) {
+        console.error("Error checking orders:", orderError);
+        toast.error("Failed to verify purchase");
+        return;
+      }
+
+      // Check if any delivered order contains this product
+      let hasPurchasedProduct = false;
+      for (const order of orders || []) {
+        if (order.items && Array.isArray(order.items)) {
+          const orderItems = Array.isArray(order.items) ? order.items : [];
+          const productInOrder = orderItems.some(
+            (item: any) =>
+              item.id === productId || item.product_id === productId,
+          );
+          if (productInOrder) {
+            hasPurchasedProduct = true;
+            break;
+          }
+        }
+      }
+
+      if (!hasPurchasedProduct) {
+        toast.error(
+          "You can only review products you have purchased and received",
+        );
+        return;
+      }
+
+      // Check if user has already reviewed this product
+      const { data: existingReview, error: reviewCheckError } = await supabase
+        .from("product_reviews")
+        .select("id")
+        .eq("product_id", productId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (reviewCheckError && reviewCheckError.code !== "PGRST116") {
+        console.error("Error checking existing review:", reviewCheckError);
+        toast.error("Failed to check existing review");
+        return;
+      }
+
+      if (existingReview) {
+        toast.error("You have already reviewed this product");
+        return;
+      }
+
       // Upload images first
       let uploadedImageUrls: string[] = [];
       if (reviewForm.reviewImages.length > 0) {
@@ -237,6 +295,15 @@ export default function ProductReviews({
 
   const handleLikeClick = async (reviewId: string) => {
     try {
+      // Check if user is logged in
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please log in to like reviews");
+        return;
+      }
+
       const currentInteraction = userInteractions[reviewId];
       const newInteraction = currentInteraction === "like" ? null : "like";
 
@@ -249,8 +316,8 @@ export default function ProductReviews({
       // Update review counts in database
       const currentReview = reviews.find((r) => r.id === reviewId);
       if (currentReview) {
-        const likeCount = currentReview.likeCount || 0;
-        const dislikeCount = currentReview.dislikeCount || 0;
+        const likeCount = currentReview.like_count || 0;
+        const dislikeCount = currentReview.dislike_count || 0;
 
         let newLikeCount = likeCount;
         let newDislikeCount = dislikeCount;
@@ -300,6 +367,15 @@ export default function ProductReviews({
 
   const handleDislikeClick = async (reviewId: string) => {
     try {
+      // Check if user is logged in
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please log in to dislike reviews");
+        return;
+      }
+
       const currentInteraction = userInteractions[reviewId];
       const newInteraction =
         currentInteraction === "dislike" ? null : "dislike";
@@ -313,8 +389,8 @@ export default function ProductReviews({
       // Update review counts in database
       const currentReview = reviews.find((r) => r.id === reviewId);
       if (currentReview) {
-        const likeCount = currentReview.likeCount || 0;
-        const dislikeCount = currentReview.dislikeCount || 0;
+        const likeCount = currentReview.like_count || 0;
+        const dislikeCount = currentReview.dislike_count || 0;
 
         let newLikeCount = likeCount;
         let newDislikeCount = dislikeCount;
@@ -624,14 +700,14 @@ export default function ProductReviews({
                   </div>
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
-                      {review.userName}
+                      {review.user_name}
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(review.createdAt).toLocaleDateString()}
+                      {new Date(review.created_at || "").toLocaleDateString()}
                     </div>
                   </div>
                 </div>
-                {review.isVerified && (
+                {review.is_verified && (
                   <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                     Verified
                   </span>
@@ -646,9 +722,9 @@ export default function ProductReviews({
                 </p>
               )}
 
-              {review.reviewImages.length > 0 && (
+              {review.review_images && review.review_images.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mb-4">
-                  {review.reviewImages.map((image, index) => (
+                  {review.review_images?.map((image: string, index: number) => (
                     <div key={index} className="relative">
                       <Image
                         src={image}
@@ -672,7 +748,7 @@ export default function ProductReviews({
                   }`}
                 >
                   <ThumbsUp className="w-4 h-4" />
-                  {review.likeCount || 0}
+                  {review.like_count || 0}
                 </button>
                 <button
                   onClick={() => handleDislikeClick(review.id)}
@@ -683,7 +759,7 @@ export default function ProductReviews({
                   }`}
                 >
                   <ThumbsDown className="w-4 h-4" />
-                  {review.dislikeCount || 0}
+                  {review.dislike_count || 0}
                 </button>
               </div>
             </motion.div>

@@ -176,7 +176,23 @@ export default function ProductPage() {
             {/* Main Image */}
             <div className="relative aspect-square rounded-lg overflow-hidden bg-white dark:bg-gray-800">
               <Image
-                src={product.cover_image || "/placeholder.jpg"}
+                src={
+                  selectedImageIndex === 0
+                    ? product.cover_image || "/placeholder.jpg"
+                    : (product.gallery_images as any[])?.[
+                          selectedImageIndex - 1
+                        ]
+                      ? typeof (product.gallery_images as any[])[
+                          selectedImageIndex - 1
+                        ] === "string"
+                        ? (product.gallery_images as any[])[
+                            selectedImageIndex - 1
+                          ]
+                        : (product.gallery_images as any[])[
+                            selectedImageIndex - 1
+                          ].url
+                      : "/placeholder.jpg"
+                }
                 alt={product.title}
                 fill
                 className="object-cover"
@@ -458,22 +474,38 @@ export default function ProductPage() {
         </motion.div>
 
         {/* Similar Products */}
-        {similarProducts.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-              Similar Products
-            </h2>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+            Similar Products
+          </h2>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-300 dark:bg-gray-700 h-48 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : similarProducts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {similarProducts.map((similarProduct) => (
                 <ProductCard key={similarProduct.id} product={similarProduct} />
               ))}
             </div>
-          </motion.div>
-        )}
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500 dark:text-gray-400">
+                No similar products found in this category.
+              </p>
+            </div>
+          )}
+        </motion.div>
 
         {/* Product Reviews */}
         <motion.div
