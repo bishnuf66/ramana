@@ -20,7 +20,7 @@ import { toast } from "react-toastify";
 import { useCart } from "../../../components/context/CartContext";
 import ProductCard from "../../../components/products/ProductCard";
 import ProductReviews from "../../../components/products/ProductReviews";
-import { Tables } from "../../../types/database.types";
+import { Tables } from "@/types/database.types";
 
 // Use the generated Supabase type
 type Product = Tables<"products">;
