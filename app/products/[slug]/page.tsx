@@ -21,7 +21,6 @@ import { useCart } from "../../../components/context/CartContext";
 import ProductCard from "../../../components/products/ProductCard";
 import ProductReviews from "../../../components/products/ProductReviews";
 import { Tables } from "@/types/database.types";
-
 // Use the generated Supabase type
 type Product = Tables<"products">;
 
@@ -177,11 +176,7 @@ export default function ProductPage() {
             {/* Main Image */}
             <div className="relative aspect-square rounded-lg overflow-hidden bg-white dark:bg-gray-800">
               <Image
-                src={
-                  (product.gallery_images as string[] | null)?.[
-                    selectedImageIndex
-                  ] || "/placeholder.jpg"
-                }
+                src={product.cover_image || "/placeholder.jpg"}
                 alt={product.title}
                 fill
                 className="object-cover"
@@ -202,19 +197,36 @@ export default function ProductPage() {
 
             {/* Thumbnail Images */}
             <div className="flex gap-2 overflow-x-auto">
-              {(product.gallery_images as string[] | null)?.map(
-                (image, index) => (
+              {product.cover_image && (
+                <button
+                  onClick={() => setSelectedImageIndex(0)}
+                  className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
+                    selectedImageIndex === 0
+                      ? "border-green-500"
+                      : "border-gray-200 dark:border-gray-700"
+                  }`}
+                >
+                  <Image
+                    src={product.cover_image}
+                    alt={`${product.title} cover`}
+                    fill
+                    className="object-cover"
+                  />
+                </button>
+              )}
+              {(product.gallery_images as any[])?.map(
+                (image: any, index: number) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImageIndex(index)}
+                    onClick={() => setSelectedImageIndex(index + 1)}
                     className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${
-                      selectedImageIndex === index
+                      selectedImageIndex === index + 1
                         ? "border-green-500"
                         : "border-gray-200 dark:border-gray-700"
                     }`}
                   >
                     <Image
-                      src={image}
+                      src={typeof image === "string" ? image : image.url}
                       alt={`${product.title} ${index + 1}`}
                       fill
                       className="object-cover"
