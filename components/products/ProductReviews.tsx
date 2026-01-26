@@ -303,10 +303,8 @@ export default function ProductReviews({
         toast.error("Please log in to like reviews");
         return;
       }
-
       const currentInteraction = userInteractions[reviewId];
       const newInteraction = currentInteraction === "like" ? null : "like";
-
       // Update user interactions state
       setUserInteractions((prev) => ({
         ...prev,
@@ -350,8 +348,8 @@ export default function ProductReviews({
             review.id === reviewId
               ? {
                   ...review,
-                  likeCount: newLikeCount,
-                  dislikeCount: newDislikeCount,
+                  like_count: newLikeCount,
+                  dislike_count: newDislikeCount,
                 }
               : review,
           ),
@@ -392,6 +390,15 @@ export default function ProductReviews({
         const likeCount = currentReview.like_count || 0;
         const dislikeCount = currentReview.dislike_count || 0;
 
+        console.log(
+          "Before update - Like:",
+          likeCount,
+          "Dislike:",
+          dislikeCount,
+          "Current interaction:",
+          currentInteraction,
+        );
+
         let newLikeCount = likeCount;
         let newDislikeCount = dislikeCount;
 
@@ -406,6 +413,13 @@ export default function ProductReviews({
           // User is adding a new dislike
           newDislikeCount = dislikeCount + 1;
         }
+
+        console.log(
+          "After update - Like:",
+          newLikeCount,
+          "Dislike:",
+          newDislikeCount,
+        );
 
         const { error } = await supabase
           .from("product_reviews")
@@ -423,8 +437,8 @@ export default function ProductReviews({
             review.id === reviewId
               ? {
                   ...review,
-                  likeCount: newLikeCount,
-                  dislikeCount: newDislikeCount,
+                  like_count: newLikeCount,
+                  dislike_count: newDislikeCount,
                 }
               : review,
           ),
