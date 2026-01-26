@@ -5,47 +5,61 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
 import { useCart } from "@/components/context/CartContext";
+import PaymentOrderForm from "@/components/orders/PaymentOrderForm";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, getTotalPrice, clearCart } = useCart();
 
-  const total = useMemo(() => getTotalPrice(), [getTotalPrice]);
-
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-
-  const [form, setForm] = useState({
-    customer_name: "",
-    customer_email: "",
-    customer_phone: "",
-    shipping_address: "",
-    notes: "",
-  });
+  // Get selected items from sessionStorage or fall back to full cart
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
 
   useEffect(() => {
-    if (cart.length === 0) return;
+    // Try to get selected items from sessionStorage
+    const storedItems = sessionStorage.getItem("selectedCheckoutItems");
+    if (storedItems) {
+      try {
+        const parsed = JSON.parse(storedItems);
+        setSelectedItems(parsed);
+      } catch (error) {
+        console.error("Error parsing selected items:", error);
+        setSelectedItems(cart);
+      }
+    } else {
+      setSelectedItems(cart);
+    }
+  }, [cart]);
 
+  // Calculate total from selected items
+  const total = useMemo(() => {
+    return selectedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+  }, [selectedItems]);
+
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Convert selected items to the format expected by PaymentOrderForm
+  const orderItems = selectedItems.map((item) => ({
+    id: item.id,
+    title: item.title || "Product",
+    price: item.price,
+    quantity: item.quantity,
+  }));
+
+  useEffect(() => {
+    if (selectedItems.length === 0) {
+      router.push("/cart");
+    }
+  }, [selectedItems.length, router]);
+
+  useEffect(() => {
     const load = async () => {
       try {
         setLoadingProfile(true);
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          setForm((prev) => ({
-            ...prev,
-            customer_name:
-              user.user_metadata?.full_name ||
-              user.user_metadata?.display_name ||
-              prev.customer_name,
-            customer_email: user.email || prev.customer_email,
-            customer_phone: user.user_metadata?.phone || prev.customer_phone,
-            shipping_address:
-              user.user_metadata?.address || prev.shipping_address,
-          }));
-        }
+        await supabase.auth.getUser();
       } catch (e) {
         // no-op
       } finally {
@@ -54,217 +68,159 @@ export default function CheckoutPage() {
     };
 
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (cart.length === 0) {
-      router.push("/cart");
-    }
-  }, [cart.length, router]);
+  const handleOrderComplete = (order: any) => {
+    console.log("Order created successfully:", order);
+    clearCart();
 
-  const handlePlaceOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (cart.length === 0) return;
-
-    if (!form.customer_name.trim()) {
-      toast.error("Please enter your name");
-      return;
-    }
-    if (!form.customer_email.trim()) {
-      toast.error("Please enter your email");
-      return;
-    }
-    if (!form.customer_phone.trim()) {
-      toast.error("Please enter your phone number");
-      return;
-    }
-    // Phone validation - basic pattern for phone numbers
-    const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-    if (!phoneRegex.test(form.customer_phone.trim())) {
-      toast.error("Please enter a valid phone number");
-      return;
-    }
-    if (form.customer_phone.trim().length < 10) {
-      toast.error("Phone number must be at least 10 digits");
-      return;
-    }
-    if (!form.shipping_address.trim()) {
-      toast.error("Please enter your shipping address");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-
-      const orderPayload = {
-        customer_name: form.customer_name.trim(),
-        customer_email: form.customer_email.trim(),
-        customer_phone: form.customer_phone.trim(),
-        shipping_address: form.shipping_address.trim(),
-        notes: form.notes.trim() || null,
-        total_amount: total,
-        items: cart,
-        status: "pending" as const,
-      };
-
-      const { data, error } = await supabase
-        .from("orders")
-        .insert(orderPayload)
-        .select();
-
-      if (error) throw error;
-
-      clearCart();
-
-      // Redirect to success page with order ID
-      if (data && data[0]) {
-        router.push(`/order-success?orderId=${data[0].id}`);
-      } else {
-        router.push("/order-success");
-      }
-    } catch (error: any) {
-      console.error("Order create error:", error);
-      toast.error(error?.message || "Failed to place order");
-
-      // Redirect to failure page with error info
-      router.push(
-        `/order-failure?error=${encodeURIComponent(error?.message || "Unknown error")}`,
-      );
-    } finally {
-      setSubmitting(false);
-    }
+    // Redirect to success page with order ID
+    router.push(`/order-success?orderId=${order.id}`);
   };
+
+  const handleCancel = () => {
+    setShowPaymentForm(false);
+  };
+
+  if (loadingProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  if (selectedItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            No items selected for checkout
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Please select items from your cart to checkout
+          </p>
+          <button
+            onClick={() => router.push("/cart")}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Go to Cart
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Checkout
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">
-          Complete your order details.
+          Complete your order details and payment.
         </p>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        {/* Cart Summary */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Order Summary
           </h2>
-          <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300 mb-2">
-            <span>Items</span>
-            <span>{cart.length}</span>
+          <div className="space-y-3 mb-4">
+            {orderItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded"
+              >
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-white">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Quantity: {item.quantity}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    NPR {item.price * item.quantity}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300 mb-2">
-            <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+
+          <div className="border-t pt-4">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                Total: NPR {total}
+              </span>
+            </div>
+
+            <button
+              onClick={() => setShowPaymentForm(true)}
+              className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            >
+              Proceed to Payment
+            </button>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Shipping & Contact
+        {/* Features Display */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold text-blue-800 dark:text-blue-200 mb-4">
+            Payment & Delivery Options
           </h2>
-
-          <form onSubmit={handlePlaceOrder} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Full Name
-              </label>
-              <input
-                value={form.customer_name}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, customer_name: e.target.value }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Your name"
-                disabled={loadingProfile}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <h3 className="font-medium text-blue-700 dark:text-blue-300">
+                Payment Methods
+              </h3>
+              <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  eSewa - Full payment with QR code
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  Khalti - Full payment with QR code
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  Partial Payment - Pay 50% now, 50% on delivery
+                </li>
+              </ul>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={form.customer_email}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, customer_email: e.target.value }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="you@example.com"
-                disabled={loadingProfile}
-              />
+            <div className="space-y-3">
+              <h3 className="font-medium text-blue-700 dark:text-blue-300">
+                Delivery Charges
+              </h3>
+              <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-2">
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Inside Kathmandu Valley: NPR 100
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                  Outside Kathmandu Valley: NPR 200
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                  Real-time calculation based on location
+                </li>
+              </ul>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Phone *
-              </label>
-              <input
-                type="tel"
-                value={form.customer_phone}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, customer_phone: e.target.value }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="98XXXXXXXX"
-                disabled={loadingProfile}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Order Notes (optional)
-              </label>
-              <textarea
-                value={form.notes}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, notes: e.target.value }))
-                }
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Special instructions for delivery, gift message, etc."
-                disabled={loadingProfile}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Shipping Address
-              </label>
-              <textarea
-                value={form.shipping_address}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, shipping_address: e.target.value }))
-                }
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Full address"
-                disabled={loadingProfile}
-              />
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={submitting || cart.length === 0}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                {submitting ? "Placing..." : "Place Order"}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push("/cart")}
-                className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Back to Cart
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
+
+        {/* Payment Order Form Modal */}
+        {showPaymentForm && (
+          <PaymentOrderForm
+            items={orderItems}
+            totalAmount={total}
+            onOrderComplete={handleOrderComplete}
+            onCancel={handleCancel}
+          />
+        )}
       </div>
     </div>
   );
