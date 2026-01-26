@@ -4,17 +4,13 @@ import { useCart } from "../../context/CartContext";
 import SingleProductModal from "./SingleProductModal";
 import Image from "next/image";
 import { toast } from "react-toastify";
+import { Tables } from "@/types/database.types";
+
+// Use the generated Supabase type
+type Product = Tables<"products">;
 
 interface ProductProps {
-  product: {
-    id: number;
-    image: string;
-    price: number;
-    rating: number;
-    title: string;
-    description?: string;
-    discountPrice?: number;
-  };
+  product: Product;
 }
 
 const ProductCard: React.FC<ProductProps> = ({ product }) => {
@@ -37,7 +33,7 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
         {/* Image container */}
         <div className="bg-green-200 p-6 md:p-8 relative flex justify-center items-center">
           <Image
-            src={product.image}
+            src={product.cover_image || "/placeholder.jpg"}
             alt={product.title}
             width={112}
             height={112}
@@ -62,17 +58,16 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
 
         {/* Ratings */}
         <p className="text-yellow-500 text-sm md:text-md text-center">
-          {"★".repeat(Math.floor(product.rating))}
-          {"☆".repeat(5 - Math.floor(product.rating))}
+          {"★".repeat(5)}
         </p>
 
         {/* Price & Add to Cart */}
         <div className="flex flex-col md:flex-row justify-between items-center px-2">
           <div className="flex flex-col md:flex-row items-center">
             <p className="text-gray-800 font-bold text-sm md:text-lg">
-              ${product.discountPrice ?? product.price}
+              ${product.discount_price ?? product.price}
             </p>
-            {product.discountPrice && (
+            {product.discount_price && (
               <p className="text-gray-400 text-xs md:text-sm line-through ml-2">
                 ${product.price.toFixed(2)}
               </p>
@@ -82,7 +77,7 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              addToCart({ ...product, quantity: 1 });
+              addToCart(product);
             }}
             className="flex items-center bg-green-500 hover:bg-green-600 text-white rounded px-3 py-1 mt-2 md:mt-0"
           >

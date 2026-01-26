@@ -33,6 +33,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [category, setCategory] = useState<Tables<"categories"> | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch product by slug (using ID as slug for now)
@@ -68,6 +69,19 @@ export default function ProductPage() {
         };
 
         setProduct(transformedProduct);
+
+        // Fetch category data if category_id exists
+        if (data.category_id) {
+          const { data: categoryData, error: categoryError } = await supabase
+            .from("categories")
+            .select("*")
+            .eq("id", data.category_id)
+            .single();
+
+          if (!categoryError && categoryData) {
+            setCategory(categoryData);
+          }
+        }
 
         // Fetch similar products (same category)
         const { data: similarData, error: similarError } = await supabase
@@ -223,7 +237,7 @@ export default function ProductPage() {
                 href={`/products?category_id=${product.category_id}`}
                 className="text-green-600 dark:text-green-400 font-medium hover:underline"
               >
-                {product.category?.name || "Uncategorized"}
+                {category?.name || "Uncategorized"}
               </Link>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
                 {product.title}

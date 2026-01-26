@@ -5,8 +5,11 @@ import { motion } from "framer-motion";
 import { Search, Grid, List } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProductCard from "../../components/products/ProductCard";
-import { Product } from "../../types/product";
 import { toast } from "react-toastify";
+import { Tables } from "@/types/database.types";
+
+// Use the generated Supabase type
+type Product = Tables<"products">;
 
 function SearchPageInner() {
   const searchParams = useSearchParams();

@@ -3,19 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Tables } from "../../types/database.types";
 
-interface Product {
-  id: number | string;
-  title: string;
-  price: number;
-  image: string;
-  category: string;
-  slug?: string;
-}
-
+type Product = Tables<"products">;
 interface ProductSearchProps {
   onSearch?: (query: string) => void;
   placeholder?: string;
@@ -200,7 +192,7 @@ export default function ProductSearch({
                   >
                     <div className="flex items-center gap-2 sm:gap-3">
                       <Image
-                        src={product.image}
+                        src={product.cover_image || "/placeholder.jpg"}
                         alt={product.title}
                         className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded"
                         width={32}
@@ -216,7 +208,7 @@ export default function ProductSearch({
                         </h4>
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-1.5 py-0.5 rounded">
-                            {product.category}
+                            {product.category_id || "General"}
                           </span>
                           <span className="font-medium">
                             NPR {product.price.toLocaleString()}

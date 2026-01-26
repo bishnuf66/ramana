@@ -41,7 +41,6 @@ export default function ProductCard({
       price: product.discount_price || product.price,
       cover_image: product.cover_image || "/placeholder.jpg",
       quantity: 1,
-      rating: 0,
     });
   };
 

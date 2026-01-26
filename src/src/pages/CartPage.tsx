@@ -21,7 +21,7 @@ const CartPage: React.FC = () => {
   // Function to sort cart items based on selected criteria and order
   const handleSort = (
     criteria: "name" | "price" | "quantity",
-    order: "asc" | "desc"
+    order: "asc" | "desc",
   ) => {
     setSortBy(criteria);
     setSortOrder(order);
@@ -61,7 +61,7 @@ const CartPage: React.FC = () => {
                   const [criteria, order] = e.target.value.split("-");
                   handleSort(
                     criteria as "name" | "price" | "quantity",
-                    order as "asc" | "desc"
+                    order as "asc" | "desc",
                   );
                 }}
                 value={`${sortBy}-${sortOrder}`}
@@ -84,7 +84,7 @@ const CartPage: React.FC = () => {
                 >
                   <div className="flex flex-col items-center justify-center">
                     <Image
-                      src={item.image}
+                      src={item.cover_image || "/placeholder.jpg"}
                       alt={item.title}
                       width={64}
                       height={64}

@@ -11,10 +11,18 @@ import React, {
 } from "react";
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
-import { Product, ProductWithCategory } from "@/types/product";
+import { Tables } from "@/types/database.types";
+
+// Use the generated Supabase type
+type Product = Tables<"products">;
+
+// Cart item type that extends Product with quantity
+type CartItem = Product & {
+  quantity: number;
+};
 
 interface CartContextType {
-  cart: Product[];
+  cart: CartItem[];
   addToCart: (
     product: Omit<Partial<Product>, "id"> & {
       id: string | number;
@@ -34,10 +42,17 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [cart, setCart] = useState<Product[]>(() => {
+  const [cart, setCart] = useState<CartItem[]>(() => {
     if (typeof window !== "undefined") {
       const storedCart = localStorage.getItem("cart");
-      return storedCart ? JSON.parse(storedCart) : [];
+      if (storedCart) {
+        const parsedCart = JSON.parse(storedCart);
+        // Ensure all items have quantity
+        return parsedCart.map((item: any) => ({
+          ...item,
+          quantity: item.quantity || 1,
+        }));
+      }
     }
     return [];
   });
@@ -93,16 +108,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     if (typeof window === "undefined") return;
 
     if (!userId) {
-      const localCart: Product[] =
-        JSON.parse(localStorage.getItem("cart") || "[]") || [];
+      const localCart: CartItem[] = JSON.parse(
+        localStorage.getItem("cart") || "[]",
+      ).map((item: any) => ({
+        ...item,
+        quantity: item.quantity || 1,
+      }));
       setCart(localCart);
       setSynced(true);
       return;
     }
 
     const sync = async () => {
-      const localCart: Product[] =
-        JSON.parse(localStorage.getItem("cart") || "[]") || [];
+      const localCart: CartItem[] = JSON.parse(
+        localStorage.getItem("cart") || "[]",
+      ).map((item: any) => ({
+        ...item,
+        quantity: item.quantity || 1,
+      }));
 
       const { data: remoteRow, error } = await supabase
         .from("user_cart")
@@ -116,20 +139,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      const remoteCart: Product[] = remoteRow?.items || [];
+      const remoteCart: CartItem[] = (remoteRow?.items || []).map(
+        (item: any) => ({
+          ...item,
+          quantity: item.quantity || 1,
+        }),
+      );
 
-      const map = new Map<string | number, Product>();
+      const map = new Map<string | number, CartItem>();
       [...remoteCart, ...localCart].forEach((item) => {
         const existing = map.get(item.id);
         if (existing) {
           map.set(item.id, {
             ...existing,
-            quantity: (existing.quantity || 0) + (item.quantity || 0),
+            quantity: existing.quantity + item.quantity,
           });
         } else {
           map.set(item.id, {
             ...item,
-            quantity: item.quantity || 0,
+            quantity: item.quantity || 1,
           });
         }
       });
@@ -171,7 +199,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         return [
           ...prevCart,
-          { ...product, quantity: product.quantity || 1 } as Product,
+          { ...product, quantity: product.quantity || 1 } as CartItem,
         ];
       });
       toast.success(`${product.title} added to cart`);

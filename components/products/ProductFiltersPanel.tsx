@@ -2,7 +2,19 @@
 
 import { motion } from "framer-motion";
 import { X, Star } from "lucide-react";
-import { Category, ProductFilters } from "../../types/product";
+import { Tables } from "../../types/database.types";
+
+// Use the generated Supabase types
+type Product = Tables<"products">;
+type Category = Tables<"categories">;
+
+// Define ProductFilters type based on usage in the component
+type ProductFilters = {
+  category_id?: string;
+  priceRange?: [number, number];
+  inStock?: boolean;
+  rating?: number;
+};
 
 interface ProductFiltersPanelProps {
   filters: ProductFilters;
@@ -77,7 +89,7 @@ export default function ProductFiltersPanel({
                 className="mr-2 text-green-500 focus:ring-green-500"
               />
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {category.name} ({category.productCount})
+                {category.name}
               </span>
             </label>
           ))}

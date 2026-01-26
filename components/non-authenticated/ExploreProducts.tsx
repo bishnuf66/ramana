@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from "react";
 import ProductCard from "../products/ProductCard";
 import { supabase } from "@/lib/supabase/client";
+import { Tables } from "../../types/database.types";
 
-import { Product } from "../../types/product";
+// Use the generated Supabase type
+type Product = Tables<"products">;
 
 const ExploreProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);

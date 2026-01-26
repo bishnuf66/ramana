@@ -4,15 +4,34 @@ import { useState, useMemo, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Search, Filter, Grid, List, SortAsc, SortDesc } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { Product, ProductFilters, ProductSort } from "../../types/product";
 import ProductCard from "../../components/products/ProductCard";
 import ProductFiltersPanel from "../../components/products/ProductFiltersPanel";
 import { toast } from "react-toastify";
 import { useSearchParams } from "next/navigation";
 import { Tables } from "../../types/database.types";
 
-// Use the generated Supabase type
-type DbProduct = Tables<"products">;
+// Use the generated Supabase types
+type Product = Tables<"products">;
+type ProductReview = Tables<"product_reviews">;
+
+// Define filter and sort types based on the Product type
+type ProductFilters = {
+  category_id?: string;
+  priceRange?: [number, number];
+  inStock?: boolean;
+  rating?: number;
+};
+
+type ProductSort = {
+  field: "name" | "price" | "rating" | "createdAt";
+  direction: "asc" | "desc";
+};
+
+// Extended product type with rating
+type ProductWithRating = Product & {
+  averageRating?: number;
+  reviewCount?: number;
+};
 
 function ProductsPageInner() {
   const searchParams = useSearchParams();
@@ -24,7 +43,7 @@ function ProductsPageInner() {
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductWithRating[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch products from Supabase
@@ -32,18 +51,53 @@ function ProductsPageInner() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("products")
-          .select("*")
-          .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Error fetching products:", error);
+        // Fetch products with their average ratings and review counts
+        const { data: products, error: productsError } = await supabase.from(
+          "products",
+        ).select(`
+            *,
+            product_reviews (
+              rating
+            )
+          `);
+
+        if (productsError) {
+          console.error("Error fetching products:", productsError);
           toast.error("Failed to load products");
           return;
         }
 
-        setProducts(data as Product[]);
+        // Calculate average ratings and review counts for each product
+        const productsWithRatings: ProductWithRating[] = products.map(
+          (product: any) => {
+            const reviews = product.product_reviews || [];
+            const validRatings = reviews.filter(
+              (review: any) => review.rating != null,
+            );
+
+            const averageRating =
+              validRatings.length > 0
+                ? validRatings.reduce(
+                    (sum: number, review: any) => sum + review.rating,
+                    0,
+                  ) / validRatings.length
+                : undefined;
+
+            const reviewCount = validRatings.length;
+
+            // Remove the nested product_reviews before returning
+            const { product_reviews: _, ...productData } = product;
+
+            return {
+              ...productData,
+              averageRating,
+              reviewCount,
+            };
+          },
+        );
+
+        setProducts(productsWithRatings);
       } catch (error) {
         console.error("Error:", error);
         toast.error("An error occurred while loading products");
@@ -89,7 +143,7 @@ function ProductsPageInner() {
       }
 
       // Rating filter
-      if (filters.rating && (product.rating || 0) < filters.rating) {
+      if (filters.rating && (product.averageRating || 0) < filters.rating) {
         return false;
       }
 
@@ -110,8 +164,8 @@ function ProductsPageInner() {
           bValue = b.discount_price || b.price;
           break;
         case "rating":
-          aValue = a.rating || 0;
-          bValue = b.rating || 0;
+          aValue = a.averageRating || 0;
+          bValue = b.averageRating || 0;
           break;
         case "createdAt":
           aValue = new Date(a.created_at || "").getTime();

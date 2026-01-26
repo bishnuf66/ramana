@@ -1,18 +1,15 @@
 import React, { useState } from "react";
 import { ShoppingCart, X, Plus, Minus } from "lucide-react";
 import Image from "next/image";
+import { Tables } from "@/types/database.types";
+
+// Use the generated Supabase type
+type Product = Tables<"products">;
 
 interface ProductModalProps {
-  product: {
-    id: number;
-    image: string;
-    price: number;
-    rating: number;
-    title: string;
-    description?: string;
-  };
+  product: Product;
   onClose: () => void;
-  addToCart: (product: any) => void;
+  addToCart: (product: Product) => void;
 }
 
 const SingleProductModal: React.FC<ProductModalProps> = ({
@@ -27,7 +24,7 @@ const SingleProductModal: React.FC<ProductModalProps> = ({
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   const handleAddToCart = () => {
-    addToCart({ ...product, quantity });
+    addToCart(product);
   };
 
   return (
@@ -40,7 +37,7 @@ const SingleProductModal: React.FC<ProductModalProps> = ({
 
         {/* Product Image */}
         <Image
-          src={product.image}
+          src={product.cover_image || "/placeholder.jpg"}
           alt={product.title}
           width={400}
           height={240}
@@ -50,10 +47,7 @@ const SingleProductModal: React.FC<ProductModalProps> = ({
         {/* Product Title, Price & Rating */}
         <h2 className="text-xl font-bold mt-4">{product.title}</h2>
         <p className="text-gray-600 text-lg">${product.price.toFixed(2)}</p>
-        <p className="text-yellow-500 text-lg">
-          {"★".repeat(Math.floor(product.rating))}{" "}
-          {"☆".repeat(5 - Math.floor(product.rating))}
-        </p>
+        <p className="text-yellow-500 text-lg">{"★".repeat(5)}</p>
 
         {/* Product Description */}
         {product.description && (

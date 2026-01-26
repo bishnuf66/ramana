@@ -2,7 +2,10 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { toast } from "react-toastify";
-import { Product } from "@/types/product";
+import { Tables } from "@/types/database.types";
+
+// Use the generated Supabase type
+type Product = Tables<"products">;
 
 interface ProductContextType {
   product: Product | null;
