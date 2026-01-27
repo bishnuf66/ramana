@@ -2,6 +2,9 @@ import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
 import { Tables } from "@/types/database.types";
 
+// Coupon type based on generated database types
+export type Coupon = Tables<"coupons">;
+
 export interface OrderData {
   customer_name: string;
   customer_email: string;
@@ -24,6 +27,7 @@ export interface CouponValidationResult {
   discount_amount: number;
   message: string;
   valid: boolean;
+  applicable_products?: string[]; // Only present when product_ids are provided
 }
 
 export function calculateDeliveryCharge(
@@ -129,6 +133,89 @@ export async function uploadPaymentScreenshot(file: File): Promise<string> {
   }
 }
 
+// Fallback function using direct table queries if RPC function is deleted
+async function validateCouponDirect(
+  code: string,
+  customerEmail: string,
+  orderTotal: number,
+  productIds?: string[],
+): Promise<CouponValidationResult | null> {
+  try {
+    // Get coupon details
+    const { data: coupon, error: couponError } = await supabase
+      .from("coupons")
+      .select("*")
+      .eq("code", code.toUpperCase())
+      .eq("is_active", true)
+      .single();
+
+    if (couponError || !coupon) {
+      return {
+        coupon_id: "",
+        discount_amount: 0,
+        message: "Invalid or inactive coupon code",
+        valid: false,
+      };
+    }
+
+    // Basic validation checks
+    const now = new Date();
+    const expiresAt = coupon.expires_at ? new Date(coupon.expires_at) : null;
+    const startsAt = coupon.starts_at ? new Date(coupon.starts_at) : null;
+
+    // Check if coupon is expired
+    if (expiresAt && now > expiresAt) {
+      return {
+        coupon_id: coupon.id,
+        discount_amount: 0,
+        message: "Coupon has expired",
+        valid: false,
+      };
+    }
+
+    // Check if coupon has started
+    if (startsAt && now < startsAt) {
+      return {
+        coupon_id: coupon.id,
+        discount_amount: 0,
+        message: "Coupon is not yet active",
+        valid: false,
+      };
+    }
+
+    // Check minimum order amount
+    if (
+      coupon.minimum_order_amount &&
+      orderTotal < coupon.minimum_order_amount
+    ) {
+      return {
+        coupon_id: coupon.id,
+        discount_amount: 0,
+        message: `Minimum order amount of ${coupon.minimum_order_amount} required`,
+        valid: false,
+      };
+    }
+
+    // Calculate discount
+    let discountAmount = 0;
+    if (coupon.discount_type === "percentage") {
+      discountAmount = (orderTotal * coupon.discount_value) / 100;
+    } else {
+      discountAmount = coupon.discount_value;
+    }
+
+    return {
+      coupon_id: coupon.id,
+      discount_amount: Math.min(discountAmount, orderTotal),
+      message: "Coupon applied successfully",
+      valid: true,
+    };
+  } catch (error) {
+    console.error("Error in direct coupon validation:", error);
+    return null;
+  }
+}
+
 export async function validateCouponCode(
   code: string,
   customerEmail: string,
@@ -136,6 +223,14 @@ export async function validateCouponCode(
   productIds?: string[],
 ): Promise<CouponValidationResult | null> {
   try {
+    console.log("Validating coupon:", {
+      code,
+      customerEmail,
+      orderTotal,
+      productIds,
+    });
+
+    // Try the RPC function first
     const { data, error } = await supabase.rpc("validate_coupon", {
       coupon_code: code,
       customer_email: customerEmail,
@@ -144,14 +239,56 @@ export async function validateCouponCode(
     });
 
     if (error) {
-      console.error("Error validating coupon:", error);
-      return null;
+      console.error("RPC function error:", error);
+
+      // Fallback to direct table validation if RPC function is deleted/broken
+      console.log("Falling back to direct table validation...");
+      return await validateCouponDirect(
+        code,
+        customerEmail,
+        orderTotal,
+        productIds,
+      );
     }
 
     // Return the first result (or null if no results)
-    return data && data.length > 0 ? data[0] : null;
+    const result = data && data.length > 0 ? data[0] : null;
+
+    // Enhanced validation based on coupon schema
+    if (result && result.valid) {
+      // Additional client-side validation can be added here if needed
+      // For now, we trust the database function validation
+      console.log("Coupon validated successfully:", {
+        coupon_id: result.coupon_id,
+        discount_amount: result.discount_amount,
+        applicable_products: result.applicable_products,
+      });
+    }
+
+    return result;
   } catch (error) {
     console.error("Error validating coupon:", error);
+    return null;
+  }
+}
+
+// Helper function to get coupon details for debugging
+export async function getCouponDetails(code: string): Promise<Coupon | null> {
+  try {
+    const { data, error } = await supabase
+      .from("coupons")
+      .select("*")
+      .eq("code", code.toUpperCase())
+      .single();
+
+    if (error) {
+      console.error("Error fetching coupon details:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching coupon details:", error);
     return null;
   }
 }
