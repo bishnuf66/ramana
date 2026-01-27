@@ -21,6 +21,7 @@ interface PaymentOrderFormProps {
   totalAmount: number;
   onOrderComplete: (order: any) => void;
   onCancel: () => void;
+  isModal?: boolean;
 }
 
 export default function PaymentOrderForm({
@@ -28,6 +29,7 @@ export default function PaymentOrderForm({
   totalAmount,
   onOrderComplete,
   onCancel,
+  isModal = true,
 }: PaymentOrderFormProps) {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -36,13 +38,13 @@ export default function PaymentOrderForm({
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] =
     useState<CouponValidationResult | null>(null);
-  const [showCouponInput, setShowCouponInput] = useState(false);
+  const [showCouponInput, setShowCouponInput] = useState(true);
   const [deliveryLocation, setDeliveryLocation] = useState<
     "inside_kathmandu" | "outside_kathmandu"
   >("inside_kathmandu");
-  const [paymentMethod, setPaymentMethod] = useState<
-    "esewa" | "khalti" | "partial_payment"
-  >("esewa");
+  const [paymentMethod, setPaymentMethod] = useState<"esewa" | "khalti">(
+    "esewa",
+  );
   const [paymentType, setPaymentType] = useState<"full" | "partial">("full");
   const [partialPaymentPercentage, setPartialPaymentPercentage] = useState(50);
 
@@ -207,7 +209,10 @@ export default function PaymentOrderForm({
     setLoading(true);
 
     try {
-      if (!paymentScreenshot) {
+      const selectedPaymentMethod = paymentMethods.find(
+        (method) => method.id === paymentMethod,
+      );
+      if (selectedPaymentMethod?.requiresScreenshot && !paymentScreenshot) {
         toast.error("Please upload payment screenshot");
         setLoading(false);
         return;
@@ -215,7 +220,7 @@ export default function PaymentOrderForm({
 
       const orderData: OrderData = {
         ...formData,
-        payment_screenshot: paymentScreenshot,
+        payment_screenshot: paymentScreenshot || undefined,
         coupon_code: appliedCoupon ? couponCode : undefined,
       };
 
@@ -243,12 +248,6 @@ export default function PaymentOrderForm({
       description: "Pay via Khalti",
       requiresScreenshot: true,
     },
-    {
-      id: "partial_payment",
-      name: "Partial Payment",
-      description: `Pay ${partialPaymentPercentage}% now, rest on delivery`,
-      requiresScreenshot: true,
-    },
   ];
 
   const getQRCodeUrl = (method: string) => {
@@ -261,408 +260,459 @@ export default function PaymentOrderForm({
     return "";
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6"
-      >
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Complete Your Order
-          </h2>
+  const formContent = (
+    <>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Complete Your Order
+        </h2>
+        {isModal && (
           <button
             onClick={onCancel}
             className="text-gray-400 hover:text-gray-600"
           >
             <X className="w-6 h-6" />
           </button>
-        </div>
+        )}
+      </div>
 
-        {/* Welcome message for non-logged users */}
-        {!user && (
-          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-green-600" />
-              <div>
-                <p className="font-medium text-green-800 dark:text-green-200">
-                  {getWelcomeMessage()}
-                </p>
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  Create an account to unlock exclusive discounts!
-                </p>
+      {/* Welcome message for non-logged users */}
+      {!user && (
+        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div className="flex items-center gap-3">
+            <User className="w-5 h-5 text-green-600" />
+            <div>
+              <p className="font-medium text-green-800 dark:text-green-200">
+                {getWelcomeMessage()}
+              </p>
+              <p className="text-sm text-green-600 dark:text-green-400">
+                Create an account to unlock exclusive discounts!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Order Summary */}
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+            Order Summary
+          </h3>
+          <div className="space-y-2">
+            {items.map((item, index) => (
+              <div key={index} className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-300">
+                  {item.title} x {item.quantity}
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  NPR {item.price * item.quantity}
+                </span>
+              </div>
+            ))}
+            <div className="border-t pt-2 mt-2 space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-300">
+                  Subtotal
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  NPR {orderTotals.subtotal}
+                </span>
+              </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>
+                    Discount ({discountCalculation.couponDiscountPercentage}%)
+                  </span>
+                  <span>-NPR {orderTotals.discountAmount}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-300">
+                  Delivery Charge
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  NPR {orderTotals.deliveryCharge}
+                </span>
+              </div>
+              {orderTotals.partialPaymentAmount > 0 && (
+                <>
+                  <div className="flex justify-between text-sm text-blue-600">
+                    <span>Partial Payment ({partialPaymentPercentage}%)</span>
+                    <span>NPR {orderTotals.partialPaymentAmount}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-orange-600">
+                    <span>Remaining Amount</span>
+                    <span>NPR {orderTotals.remainingAmount}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between font-semibold text-lg text-gray-900 dark:text-white">
+                <span>Total</span>
+                <span>NPR {orderTotals.totalAmount}</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Customer Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.customer_name}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  customer_name: e.target.value,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email *
+            </label>
+            <input
+              type="email"
+              required
+              value={formData.customer_email}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  customer_email: e.target.value,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              value={formData.customer_phone}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  customer_phone: e.target.value,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Shipping Address *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.shipping_address}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  shipping_address: e.target.value,
+                }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        {/* Delivery Location */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <MapPin className="inline w-4 h-4 mr-1" />
+            Delivery Location *
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label
+              className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                deliveryLocation === "inside_kathmandu"
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
+            >
+              <input
+                type="radio"
+                name="delivery_location"
+                value="inside_kathmandu"
+                checked={deliveryLocation === "inside_kathmandu"}
+                onChange={(e) => {
+                  setDeliveryLocation(e.target.value as any);
+                  updateOrderTotals();
+                }}
+                className="mr-3"
+              />
+              <div>
+                <div className="font-medium text-gray-900 dark:text-white">
+                  Inside Kathmandu Valley
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Delivery Charge: NPR 100
+                </div>
+              </div>
+            </label>
+            <label
+              className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                deliveryLocation === "outside_kathmandu"
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
+            >
+              <input
+                type="radio"
+                name="delivery_location"
+                value="outside_kathmandu"
+                checked={deliveryLocation === "outside_kathmandu"}
+                onChange={(e) => {
+                  setDeliveryLocation(e.target.value as any);
+                  updateOrderTotals();
+                }}
+                className="mr-3"
+              />
+              <div>
+                <div className="font-medium text-gray-900 dark:text-white">
+                  Outside Kathmandu Valley
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Delivery Charge: NPR 200
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Payment Method */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <CreditCard className="inline w-4 h-4 mr-1" />
+            Payment Method *
+          </label>
+          <div className="grid grid-cols-1 gap-3">
+            {paymentMethods.map((method) => (
+              <label
+                key={method.id}
+                className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                  paymentMethod === method.id
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value={method.id}
+                  checked={paymentMethod === method.id}
+                  onChange={(e) => {
+                    setPaymentMethod(e.target.value as "esewa" | "khalti");
+                    setFormData((prev) => ({
+                      ...prev,
+                      payment_method: e.target.value as "esewa" | "khalti",
+                    }));
+                  }}
+                  className="mr-3"
+                />
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {method.name}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {method.description}
+                  </div>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Payment Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <Tag className="inline w-4 h-4 mr-1" />
+            Payment Type *
+          </label>
+          <div className="grid grid-cols-1 gap-3">
+            <label
+              className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                paymentType === "full"
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment_type"
+                value="full"
+                checked={paymentType === "full"}
+                onChange={(e) => {
+                  setPaymentType("full");
+                  setFormData((prev) => ({
+                    ...prev,
+                    payment_type: "full",
+                  }));
+                }}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-gray-900 dark:text-white">
+                  Full Payment
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Pay the complete amount now
+                </div>
+              </div>
+            </label>
+
+            <label
+              className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                paymentType === "partial"
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment_type"
+                value="partial"
+                checked={paymentType === "partial"}
+                onChange={(e) => {
+                  setPaymentType("partial");
+                  setFormData((prev) => ({
+                    ...prev,
+                    payment_type: "partial",
+                  }));
+                }}
+                className="mr-3"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-gray-900 dark:text-white">
+                  Partial Payment
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Pay {partialPaymentPercentage}% now, rest on delivery
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Partial Payment Percentage */}
+        {paymentType === "partial" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Partial Payment Percentage *
+            </label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="10"
+                max="90"
+                step="10"
+                value={partialPaymentPercentage}
+                onChange={(e) => {
+                  setPartialPaymentPercentage(parseInt(e.target.value));
+                  setFormData((prev) => ({
+                    ...prev,
+                    partial_payment_percentage: parseInt(e.target.value),
+                  }));
+                  updateOrderTotals();
+                }}
+                className="flex-1"
+              />
+              <span className="font-medium text-gray-900 dark:text-white min-w-[60px]">
+                {partialPaymentPercentage}%
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              You'll pay NPR {orderTotals.partialPaymentAmount} now and NPR{" "}
+              {orderTotals.remainingAmount} on delivery
+            </p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Order Summary */}
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-              Order Summary
-            </h3>
-            <div className="space-y-2">
-              {items.map((item, index) => (
-                <div key={index} className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-300">
-                    {item.title} x {item.quantity}
-                  </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    NPR {item.price * item.quantity}
-                  </span>
-                </div>
-              ))}
-              <div className="border-t pt-2 mt-2 space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Subtotal
-                  </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    NPR {orderTotals.subtotal}
-                  </span>
-                </div>
-                {appliedCoupon && (
-                  <div className="flex justify-between text-sm text-green-600">
-                    <span>
-                      Discount ({discountCalculation.couponDiscountPercentage}%)
-                    </span>
-                    <span>-NPR {orderTotals.discountAmount}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Delivery Charge
-                  </span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    NPR {orderTotals.deliveryCharge}
-                  </span>
-                </div>
-                {orderTotals.partialPaymentAmount > 0 && (
-                  <>
-                    <div className="flex justify-between text-sm text-blue-600">
-                      <span>Partial Payment ({partialPaymentPercentage}%)</span>
-                      <span>NPR {orderTotals.partialPaymentAmount}</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-orange-600">
-                      <span>Remaining Amount</span>
-                      <span>NPR {orderTotals.remainingAmount}</span>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-between font-semibold text-lg text-gray-900 dark:text-white">
-                  <span>Total</span>
-                  <span>NPR {orderTotals.totalAmount}</span>
-                </div>
+        {/* QR Code Display */}
+        {(paymentMethod === "esewa" || paymentMethod === "khalti") && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <QrCode className="w-5 h-5 text-blue-600" />
+              <h4 className="font-semibold text-blue-800 dark:text-blue-200">
+                Scan QR Code to Pay
+              </h4>
+            </div>
+            <div className="flex justify-center">
+              <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center border-2 border-gray-300">
+                <p className="text-gray-500 text-center text-sm">
+                  QR Code for {paymentMethod === "esewa" ? "eSewa" : "Khalti"}
+                </p>
+                {/* Replace with actual QR code image */}
+                {/* <img src={getQRCodeUrl(paymentMethod)} alt={`${paymentMethod} QR Code`} className="w-full h-full object-cover rounded" /> */}
               </div>
             </div>
+            <p className="text-sm text-blue-600 dark:text-blue-400 text-center mt-3">
+              Scan with your {paymentMethod === "esewa" ? "eSewa" : "Khalti"}{" "}
+              app and upload screenshot below
+            </p>
           </div>
+        )}
 
-          {/* Customer Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.customer_name}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    customer_name: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email *
-              </label>
-              <input
-                type="email"
-                required
-                value={formData.customer_email}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    customer_email: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-          </div>
+        {/* Coupon Code */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <Tag className="inline w-4 h-4 mr-1" />
+            Coupon Code (Optional)
+          </label>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                value={formData.customer_phone}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    customer_phone: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Shipping Address *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.shipping_address}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    shipping_address: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-            </div>
-          </div>
-
-          {/* Delivery Location */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              <MapPin className="inline w-4 h-4 mr-1" />
-              Delivery Location *
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <label
-                className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                  deliveryLocation === "inside_kathmandu"
-                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                    : "border-gray-300 dark:border-gray-600"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="delivery_location"
-                  value="inside_kathmandu"
-                  checked={deliveryLocation === "inside_kathmandu"}
-                  onChange={(e) => {
-                    setDeliveryLocation(e.target.value as any);
-                    updateOrderTotals();
-                  }}
-                  className="mr-3"
-                />
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-white">
-                    Inside Kathmandu Valley
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Delivery Charge: NPR 100
-                  </div>
-                </div>
-              </label>
-              <label
-                className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                  deliveryLocation === "outside_kathmandu"
-                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                    : "border-gray-300 dark:border-gray-600"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="delivery_location"
-                  value="outside_kathmandu"
-                  checked={deliveryLocation === "outside_kathmandu"}
-                  onChange={(e) => {
-                    setDeliveryLocation(e.target.value as any);
-                    updateOrderTotals();
-                  }}
-                  className="mr-3"
-                />
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-white">
-                    Outside Kathmandu Valley
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Delivery Charge: NPR 200
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Payment Method */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              <CreditCard className="inline w-4 h-4 mr-1" />
-              Payment Method *
-            </label>
-            <div className="grid grid-cols-1 gap-3">
-              {paymentMethods.map((method) => (
-                <label
-                  key={method.id}
-                  className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                    paymentMethod === method.id
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                      : "border-gray-300 dark:border-gray-600"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment_method"
-                    value={method.id}
-                    checked={paymentMethod === method.id}
-                    onChange={(e) => {
-                      setPaymentMethod(e.target.value as any);
-                      setFormData((prev) => ({
-                        ...prev,
-                        payment_method: e.target.value as any,
-                      }));
-                    }}
-                    className="mr-3"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      {method.name}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {method.description}
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Partial Payment Percentage */}
-          {paymentMethod === "partial_payment" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Partial Payment Percentage *
-              </label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="10"
-                  max="90"
-                  step="10"
-                  value={partialPaymentPercentage}
-                  onChange={(e) => {
-                    setPartialPaymentPercentage(parseInt(e.target.value));
-                    setFormData((prev) => ({
-                      ...prev,
-                      partial_payment_percentage: parseInt(e.target.value),
-                    }));
-                    updateOrderTotals();
-                  }}
-                  className="flex-1"
-                />
-                <span className="font-medium text-gray-900 dark:text-white min-w-[60px]">
-                  {partialPaymentPercentage}%
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                  {couponCode} - {discountCalculation.couponDiscountPercentage}%
+                  OFF
                 </span>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                You'll pay NPR {orderTotals.partialPaymentAmount} now and NPR{" "}
-                {orderTotals.remainingAmount} on delivery
-              </p>
+              <button
+                type="button"
+                onClick={removeCoupon}
+                className="text-red-500 hover:text-red-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="Enter coupon code"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+              <button
+                type="button"
+                onClick={applyCoupon}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Apply
+              </button>
             </div>
           )}
+        </div>
 
-          {/* QR Code Display */}
-          {(paymentMethod === "esewa" || paymentMethod === "khalti") && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <QrCode className="w-5 h-5 text-blue-600" />
-                <h4 className="font-semibold text-blue-800 dark:text-blue-200">
-                  Scan QR Code to Pay
-                </h4>
-              </div>
-              <div className="flex justify-center">
-                <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center border-2 border-gray-300">
-                  <p className="text-gray-500 text-center text-sm">
-                    QR Code for {paymentMethod === "esewa" ? "eSewa" : "Khalti"}
-                  </p>
-                  {/* Replace with actual QR code image */}
-                  {/* <img src={getQRCodeUrl(paymentMethod)} alt={`${paymentMethod} QR Code`} className="w-full h-full object-cover rounded" /> */}
-                </div>
-              </div>
-              <p className="text-sm text-blue-600 dark:text-blue-400 text-center mt-3">
-                Scan with your {paymentMethod === "esewa" ? "eSewa" : "Khalti"}{" "}
-                app and upload screenshot below
-              </p>
-            </div>
-          )}
-
-          {/* Coupon Code */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                <Tag className="inline w-4 h-4 mr-1" />
-                Coupon Code
-              </label>
-              {!appliedCoupon && (
-                <button
-                  type="button"
-                  onClick={() => setShowCouponInput(!showCouponInput)}
-                  className="text-sm text-green-600 hover:text-green-700"
-                >
-                  {showCouponInput ? "Hide" : "Have a coupon?"}
-                </button>
-              )}
-            </div>
-
-            {appliedCoupon ? (
-              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                    {couponCode} -{" "}
-                    {discountCalculation.couponDiscountPercentage}% OFF
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={removeCoupon}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              showCouponInput && (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) =>
-                      setCouponCode(e.target.value.toUpperCase())
-                    }
-                    placeholder="Enter coupon code"
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={applyCoupon}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Apply
-                  </button>
-                </div>
-              )
-            )}
-          </div>
-
-          {/* Payment Screenshot Upload */}
+        {/* Payment Screenshot Upload */}
+        {paymentMethods.find((method) => method.id === paymentMethod)
+          ?.requiresScreenshot && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Payment Screenshot *
@@ -702,44 +752,72 @@ export default function PaymentOrderForm({
               )}
             </div>
           </div>
+        )}
 
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Order Notes (Optional)
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, notes: e.target.value }))
-              }
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Any special instructions for your order..."
-            />
-          </div>
+        {/* Notes */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Order Notes (Optional)
+          </label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, notes: e.target.value }))
+            }
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Any special instructions for your order..."
+          />
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
-              {loading
-                ? "Processing..."
-                : `Pay NPR ${orderTotals.partialPaymentAmount || orderTotals.totalAmount}`}
-            </button>
-          </div>
-        </form>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+          >
+            {loading
+              ? "Processing..."
+              : `Pay NPR ${orderTotals.partialPaymentAmount || orderTotals.totalAmount}`}
+          </button>
+        </div>
+      </form>
+    </>
+  );
+
+  if (isModal) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6"
+        >
+          {formContent}
+        </motion.div>
       </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+    >
+      {formContent}
     </motion.div>
   );
 }

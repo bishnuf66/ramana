@@ -13,7 +13,7 @@ export default function CheckoutPage() {
   const { cart, getTotalPrice, clearCart } = useCart();
   const { selectedItems, getCheckoutTotal, clearSelectedItems } = useCheckout();
 
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   // Calculate total from selected items
@@ -64,7 +64,7 @@ export default function CheckoutPage() {
   };
 
   const handleCancel = () => {
-    setShowPaymentForm(false);
+    router.push("/cart");
   };
 
   if (loadingProfile) {
@@ -140,13 +140,6 @@ export default function CheckoutPage() {
                 Total: NPR {total}
               </span>
             </div>
-
-            <button
-              onClick={() => setShowPaymentForm(true)}
-              className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-            >
-              Proceed to Payment
-            </button>
           </div>
         </div>
 
@@ -197,15 +190,14 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Payment Order Form Modal */}
-        {showPaymentForm && (
-          <PaymentOrderForm
-            items={orderItems}
-            totalAmount={total}
-            onOrderComplete={handleOrderComplete}
-            onCancel={handleCancel}
-          />
-        )}
+        {/* Payment Form */}
+        <PaymentOrderForm
+          items={orderItems}
+          totalAmount={total}
+          onOrderComplete={handleOrderComplete}
+          onCancel={handleCancel}
+          isModal={false}
+        />
       </div>
     </div>
   );
