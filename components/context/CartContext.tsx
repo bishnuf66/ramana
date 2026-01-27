@@ -100,7 +100,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             const product = products.find((p) => p.id === ref.product_id);
             if (!product) {
               console.warn(
-                `Product ${ref.product_id} not found, removing from cart`,
+                `Product ${ref.product_id} not found, removing 
+                
+                + cart`,
               );
               return null;
             }
@@ -166,7 +168,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         console.log("Cart successfully persisted to database");
       }
-    }, 500);
+    }, 0); // Immediate persistence for instant UI feedback
 
     return () => {
       if (persistTimeoutRef.current) {
@@ -253,12 +255,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         let newReferences;
 
         if (existingRef) {
-          // Update existing item with exact selected quantity (not accumulate)
+          // Add selected quantity to existing quantity (accumulate)
           newReferences = prevReferences.map((ref) =>
             ref.product_id === product.id
               ? {
                   ...ref,
-                  quantity: product.quantity || 1, // Set exact quantity, don't accumulate
+                  quantity: ref.quantity + (product.quantity || 1), // Accumulate quantity
                 }
               : ref,
           );
@@ -273,27 +275,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         console.log("New cart references:", newReferences);
-
-        // IMMEDIATE UI UPDATE: Update enriched cart
-        setCart((prevCart) => {
-          const existingItem = prevCart.find((item) => item.id === product.id);
-          if (existingItem) {
-            // Update existing item with exact quantity
-            return prevCart.map((item) =>
-              item.id === product.id
-                ? { ...item, quantity: product.quantity || 1 }
-                : item,
-            );
-          } else {
-            // Add new item
-            const newItem: CartItem = {
-              ...product,
-              quantity: product.quantity || 1,
-              added_at: new Date().toISOString(),
-            } as CartItem;
-            return [...prevCart, newItem];
-          }
-        });
 
         return newReferences;
       });
@@ -311,15 +292,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           : ref,
       );
 
-      // IMMEDIATE UI UPDATE: Update enriched cart
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.id === String(id)
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        ),
-      );
-
       return newReferences;
     });
   }, []);
@@ -333,15 +305,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             : ref,
         );
 
-        // IMMEDIATE UI UPDATE: Update enriched cart
-        setCart((prevCart) =>
-          prevCart.map((item) =>
-            item.id === String(id) && item.quantity > 1
-              ? { ...item, quantity: item.quantity - 1 }
-              : item,
-          ),
-        );
-
         return newReferences;
       });
     },
@@ -353,9 +316,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       const newReferences = prevReferences.filter(
         (ref) => ref.product_id !== String(id),
       );
-
-      // IMMEDIATE UI UPDATE: Remove from enriched cart
-      setCart((prevCart) => prevCart.filter((item) => item.id !== String(id)));
 
       return newReferences;
     });
@@ -377,11 +337,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             (ref) => ref.product_id !== String(id),
           );
 
-          // IMMEDIATE UI UPDATE: Remove from enriched cart
-          setCart((prevCart) =>
-            prevCart.filter((item) => item.id !== String(id)),
-          );
-
           return newReferences;
         });
         toast.success("Item removed from cart");
@@ -392,15 +347,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             ref.product_id === String(id)
               ? { ...ref, quantity: newQuantity }
               : ref,
-          );
-
-          // IMMEDIATE UI UPDATE: Update enriched cart
-          setCart((prevCart) =>
-            prevCart.map((item) =>
-              item.id === String(id)
-                ? { ...item, quantity: newQuantity }
-                : item,
-            ),
           );
 
           return newReferences;

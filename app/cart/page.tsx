@@ -21,6 +21,7 @@ export default function Cart() {
     clearCart,
     getTotalPrice,
     getTotalItems,
+    refreshCart,
   } = useCart();
 
   // Debug: Log cart data when it changes
@@ -28,6 +29,7 @@ export default function Cart() {
     console.log("Cart page - cart data:", cart);
     console.log("Cart page - cart length:", cart.length);
   }, [cart]);
+
   const { addToCheckout } = useCheckout();
 
   const [sortBy, setSortBy] = useState<"name" | "price" | "quantity">("name");
@@ -35,6 +37,14 @@ export default function Cart() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Refresh cart when component mounts to ensure latest data
+  useEffect(() => {
+    if (userId) {
+      console.log("Cart page mounted - refreshing cart data");
+      refreshCart();
+    }
+  }, [userId, refreshCart]);
 
   // Check authentication status
   useEffect(() => {
