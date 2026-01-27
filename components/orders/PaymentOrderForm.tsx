@@ -194,6 +194,7 @@ export default function PaymentOrderForm({
       couponCode,
       formData.customer_email,
       totalAmount,
+      items.map((item: any) => item.product_id) || [],
     );
     if (couponValidation && couponValidation.valid) {
       setAppliedCoupon(couponValidation);

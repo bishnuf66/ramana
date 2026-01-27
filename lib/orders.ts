@@ -133,12 +133,14 @@ export async function validateCouponCode(
   code: string,
   customerEmail: string,
   orderTotal: number,
+  productIds?: string[],
 ): Promise<CouponValidationResult | null> {
   try {
     const { data, error } = await supabase.rpc("validate_coupon", {
       coupon_code: code,
       customer_email: customerEmail,
       order_total: orderTotal,
+      product_ids: productIds || null,
     });
 
     if (error) {
@@ -235,6 +237,7 @@ export async function createOrder(orderData: OrderData): Promise<any> {
         orderData.coupon_code,
         orderData.customer_email,
         orderData.total_amount,
+        orderData.items?.map((item: any) => item.product_id) || [],
       );
 
       if (couponValidation && couponValidation.valid) {
@@ -249,34 +252,8 @@ export async function createOrder(orderData: OrderData): Promise<any> {
       }
     }
 
-    // Check for first-time customer discount (only for logged-in users)
+    // Auto coupon logic removed - customers must manually enter and apply coupons
     let isFirstTimeCustomer = false;
-    if (user && !orderData.coupon_code) {
-      isFirstTimeCustomer = await checkFirstTimeDiscount(
-        orderData.customer_email,
-      );
-      if (isFirstTimeCustomer) {
-        // Apply FIRST30 coupon for first-time logged-in customers
-        const couponValidation = await validateCouponCode(
-          "FIRST30",
-          orderData.customer_email,
-          orderData.total_amount,
-        );
-
-        if (couponValidation && couponValidation.valid) {
-          discountAmount = couponValidation.discount_amount;
-          const calculation = calculateDiscount(
-            orderData.total_amount,
-            discountAmount,
-          );
-          finalAmount = calculation.finalAmount;
-
-          toast.success(
-            `First-time customer discount applied! You saved NPR ${discountAmount}`,
-          );
-        }
-      }
-    }
 
     // Upload payment screenshot if provided (required for all payment methods now)
     let paymentScreenshotUrl = null;
@@ -337,39 +314,6 @@ export async function createOrder(orderData: OrderData): Promise<any> {
         orderData.customer_email,
         discountAmount,
         order.id,
-      );
-    }
-
-    // Apply FIRST30 coupon usage if first-time discount was applied
-    if (isFirstTimeCustomer && user && !orderData.coupon_code) {
-      // Get FIRST30 coupon details to record usage
-      const first30Coupon = await validateCouponCode(
-        "FIRST30",
-        orderData.customer_email,
-        orderData.total_amount,
-      );
-
-      if (first30Coupon && first30Coupon.valid) {
-        await applyCouponUsage(
-          first30Coupon.coupon_id,
-          orderData.customer_email,
-          discountAmount,
-          order.id,
-        );
-      }
-    }
-
-    // Update customer discount record for first-time customers
-    if (isFirstTimeCustomer) {
-      await supabase.from("customer_discounts").upsert(
-        {
-          customer_email: orderData.customer_email,
-          first_purchase_completed: true,
-          first_purchase_discount_applied: true,
-        },
-        {
-          onConflict: "customer_email",
-        },
       );
     }
 
