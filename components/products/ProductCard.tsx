@@ -46,15 +46,7 @@ export default function ProductCard({
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
-    toggleFavorite({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      image: product.cover_image || "/placeholder.jpg",
-      rating: 0,
-      category: "Uncategorized",
-      addedAt: new Date().toISOString(),
-    });
+    toggleFavorite(product);
   };
 
   const handleWhatsAppOrder = (e: React.MouseEvent) => {

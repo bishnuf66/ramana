@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
+import { Tables } from "@/types/database.types";
 
 // Simple debounce function
 function useDebounce<T extends (...args: any[]) => void>(
@@ -26,27 +27,20 @@ function useDebounce<T extends (...args: any[]) => void>(
   };
 }
 
-export interface FavoriteProduct {
-  id: number | string;
-  title: string;
-  price: number;
-  image: string;
-  rating: number;
-  category: string;
-  addedAt: string;
-}
+// Use the full Product type instead of limited FavoriteProduct
+type Product = Tables<"products">;
 
 interface FavoritesContextType {
-  favorites: FavoriteProduct[];
-  addToFavorites: (product: FavoriteProduct) => void;
-  removeFromFavorites: (id: number | string) => void;
+  favorites: Product[];
+  addToFavorites: (product: Product) => void;
+  removeFromFavorites: (id: string) => void;
   clearFavorites: () => void;
-  isFavorite: (id: number | string) => boolean;
+  isFavorite: (id: string) => boolean;
   getTotalFavorites: () => number;
-  toggleFavorite: (product: FavoriteProduct) => void;
+  toggleFavorite: (product: Product) => void;
   loadUserData?: () => Promise<void>;
   syncFavorites?: () => Promise<void>;
-  getFavorites?: () => Promise<FavoriteProduct[]>;
+  getFavorites?: () => Promise<Product[]>;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(
@@ -54,7 +48,7 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(
 );
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavorites] = useState<FavoriteProduct[]>(() => {
+  const [favorites, setFavorites] = useState<Product[]>(() => {
     if (typeof window !== "undefined") {
       const storedFavorites = localStorage.getItem("favorites");
       return storedFavorites ? JSON.parse(storedFavorites) : [];
@@ -108,7 +102,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return;
 
     if (!userId) {
-      const localFavs: FavoriteProduct[] =
+      const localFavs: Product[] =
         JSON.parse(localStorage.getItem("favorites") || "[]") || [];
       setFavorites(localFavs);
       setSynced(true);
@@ -116,7 +110,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     }
 
     const sync = async () => {
-      const localFavs: FavoriteProduct[] =
+      const localFavs: Product[] =
         JSON.parse(localStorage.getItem("favorites") || "[]") || [];
 
       const { data: remoteRow, error } = await supabase
@@ -131,8 +125,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const remoteFavs: FavoriteProduct[] = remoteRow?.items || [];
-      const map = new Map<string | number, FavoriteProduct>();
+      const remoteFavs: Product[] = remoteRow?.items || [];
+      const map = new Map<string, Product>();
       [...remoteFavs, ...localFavs].forEach((fav) => {
         map.set(fav.id, fav);
       });
@@ -153,7 +147,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     sync();
   }, [userId]);
 
-  const addToFavorites = useCallback((product: FavoriteProduct) => {
+  const addToFavorites = useCallback((product: Product) => {
     setFavorites((prevFavorites) => {
       const existingFavorite = prevFavorites.find(
         (fav) => fav.id === product.id,
@@ -162,9 +156,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         toast.info("Product already in favorites");
         return prevFavorites;
       }
-      const withAddedAt: FavoriteProduct = {
+      const withAddedAt: Product = {
         ...product,
-        addedAt: product.addedAt || new Date().toISOString(),
       };
       toast.success(`${product.title} added to favorites`);
       return [...prevFavorites, withAddedAt];
@@ -183,7 +176,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     toast.success("Product removed from favorites");
   }, []);
 
-  const toggleFavorite = useCallback((product: FavoriteProduct) => {
+  const toggleFavorite = useCallback((product: Product) => {
     setFavorites((prevFavorites) => {
       const existingFavorite = prevFavorites.find(
         (fav) => fav.id === product.id,
@@ -198,9 +191,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
           return prevFavorites; // Already exists, don't add again
         }
         toast.success("Product added to favorites");
-        const withAddedAt: FavoriteProduct = {
+        const withAddedAt: Product = {
           ...product,
-          addedAt: product.addedAt || new Date().toISOString(),
         };
         return [...prevFavorites, withAddedAt];
       }

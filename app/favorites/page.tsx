@@ -2,10 +2,13 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Heart, Search } from "lucide-react";
 import { useFavorites } from "@/components/context/FavoritesContext";
 import { motion } from "framer-motion";
+import ProductCard from "@/components/products/ProductCard";
+import { Tables } from "@/types/database.types";
+
+type Product = Tables<"products">;
 
 export default function FavoritesPage() {
   const { favorites, removeFromFavorites, clearFavorites } = useFavorites();
@@ -27,10 +30,14 @@ export default function FavoritesPage() {
       comparison = a.price - b.price;
     } else if (sortBy === "addedDate") {
       comparison =
-        new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
+        new Date(b.created_at || "").getTime() -
+        new Date(a.created_at || "").getTime();
     }
     return sortOrder === "asc" ? comparison : -comparison;
   });
+
+  // Since we're now storing full Product objects, we don't need transformation
+  const transformedFavorites = sortedFavorites;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
@@ -78,7 +85,7 @@ export default function FavoritesPage() {
         </div>
 
         {/* Favorites Grid */}
-        {sortedFavorites.length === 0 ? (
+        {transformedFavorites.length === 0 ? (
           <div className="text-center py-16">
             <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -96,57 +103,9 @@ export default function FavoritesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedFavorites.map((favorite) => (
-              <motion.div
-                key={favorite.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-              >
-                <div className="relative">
-                  {/* Product Image */}
-                  <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                    <Image
-                      src={favorite.image}
-                      alt={favorite.title}
-                      className="w-full h-full object-cover"
-                      width={300}
-                      height={300}
-                    />
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {favorite.title}
-                      </h3>
-                      <button
-                        onClick={() => removeFromFavorites(favorite.id)}
-                        className="text-red-500 hover:text-red-600 p-2 rounded-lg transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
-
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      ${favorite.price.toFixed(2)} • {favorite.category} • Added{" "}
-                      {favorite.addedAt}
-                    </div>
-
-                    <div className="mt-4 flex items-center space-x-4">
-                      <Link
-                        href={`/products/${favorite.id}`}
-                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {transformedFavorites.map((product) => (
+              <ProductCard key={product.id} product={product} viewMode="grid" />
             ))}
           </div>
         )}
