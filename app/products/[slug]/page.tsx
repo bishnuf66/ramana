@@ -172,6 +172,8 @@ export default function ProductPage() {
 ${product.description || ""}
 ${product.discount_price ? `\n*Discount Price:* NPR ${product.discount_price.toLocaleString()}` : `\n*Price:* NPR ${product.price.toLocaleString()}`}
 
+*View Product:* ${typeof window !== "undefined" ? window.location.origin : ""}/products/${product.slug}
+
 Please let me know the availability and delivery details.
 Thank you! 🌸`;
 
