@@ -253,11 +253,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         let newReferences;
 
         if (existingRef) {
+          // Update existing item with exact selected quantity (not accumulate)
           newReferences = prevReferences.map((ref) =>
             ref.product_id === product.id
               ? {
                   ...ref,
-                  quantity: ref.quantity + (product.quantity || 1),
+                  quantity: product.quantity || 1, // Set exact quantity, don't accumulate
                 }
               : ref,
           );
@@ -272,6 +273,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         console.log("New cart references:", newReferences);
+
+        // IMMEDIATE UI UPDATE: Update enriched cart
+        setCart((prevCart) => {
+          const existingItem = prevCart.find((item) => item.id === product.id);
+          if (existingItem) {
+            // Update existing item with exact quantity
+            return prevCart.map((item) =>
+              item.id === product.id
+                ? { ...item, quantity: product.quantity || 1 }
+                : item,
+            );
+          } else {
+            // Add new item
+            const newItem: CartItem = {
+              ...product,
+              quantity: product.quantity || 1,
+              added_at: new Date().toISOString(),
+            } as CartItem;
+            return [...prevCart, newItem];
+          }
+        });
+
         return newReferences;
       });
 
