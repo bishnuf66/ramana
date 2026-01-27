@@ -10,7 +10,7 @@ import PaymentOrderForm from "@/components/orders/PaymentOrderForm";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, getTotalPrice, clearCart } = useCart();
+  const { cart, getTotalPrice, removeFromCart } = useCart();
   const { selectedItems, getCheckoutTotal, clearSelectedItems } = useCheckout();
 
   const [showPaymentForm, setShowPaymentForm] = useState(true);
@@ -56,7 +56,13 @@ export default function CheckoutPage() {
 
   const handleOrderComplete = (order: any) => {
     console.log("Order created successfully:", order);
-    clearCart();
+
+    // Remove only the items that were checked out from cart
+    selectedItems.forEach((item) => {
+      removeFromCart(item.id);
+    });
+
+    // Clear checkout context
     clearSelectedItems();
 
     // Redirect to success page with order ID
