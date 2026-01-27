@@ -5,6 +5,7 @@ import { Trash, Check } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/context/CartContext";
+import { useCheckout } from "@/components/context/CheckoutContext";
 
 export default function Cart() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function Cart() {
     getTotalPrice,
     getTotalItems,
   } = useCart();
+  const { addToCheckout } = useCheckout();
 
   const [sortBy, setSortBy] = useState<"name" | "price" | "quantity">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -89,20 +91,13 @@ export default function Cart() {
       return;
     }
 
-    console.log("Storing selected items in sessionStorage:", selectedCartItems);
-
-    // Store selected items in sessionStorage for checkout page
-    sessionStorage.setItem(
-      "selectedCheckoutItems",
-      JSON.stringify(selectedCartItems),
-    );
-
-    // Verify it was stored correctly
-    const stored = sessionStorage.getItem("selectedCheckoutItems");
     console.log(
-      "Verification - stored items:",
-      stored ? JSON.parse(stored) : null,
+      "Adding selected items to checkout context:",
+      selectedCartItems,
     );
+
+    // Store selected items in checkout context
+    addToCheckout(selectedCartItems);
 
     router.push("/checkout");
   };

@@ -5,51 +5,21 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
 import { useCart } from "@/components/context/CartContext";
+import { useCheckout } from "@/components/context/CheckoutContext";
 import PaymentOrderForm from "@/components/orders/PaymentOrderForm";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, getTotalPrice, clearCart } = useCart();
-
-  // Get selected items from sessionStorage or fall back to full cart
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
-
-  useEffect(() => {
-    // Try to get selected items from sessionStorage
-    const storedItems = sessionStorage.getItem("selectedCheckoutItems");
-    console.log("SessionStorage contents on checkout:", storedItems);
-
-    if (storedItems) {
-      try {
-        const parsed = JSON.parse(storedItems);
-        console.log("Successfully parsed selected items:", parsed);
-        setSelectedItems(parsed);
-      } catch (error) {
-        console.error("Error parsing selected items:", error);
-        console.log("Falling back to full cart");
-        setSelectedItems(cart);
-      }
-    } else {
-      console.log("No selected items in sessionStorage");
-      console.log(
-        "Available sessionStorage keys:",
-        Object.keys(sessionStorage),
-      );
-      console.log("Cart items available:", cart);
-      setSelectedItems(cart);
-    }
-  }, []); // Remove cart dependency to prevent clearing sessionStorage
-
-  // Calculate total from selected items
-  const total = useMemo(() => {
-    return selectedItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
-    );
-  }, [selectedItems]);
+  const { selectedItems, getCheckoutTotal, clearSelectedItems } = useCheckout();
 
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Calculate total from selected items
+  const total = useMemo(() => {
+    return getCheckoutTotal();
+  }, [selectedItems, getCheckoutTotal]);
 
   // Convert selected items to the format expected by PaymentOrderForm
   const orderItems = selectedItems.map((item) => ({
@@ -60,6 +30,9 @@ export default function CheckoutPage() {
   }));
 
   useEffect(() => {
+    console.log("Checkout page - Selected items:", selectedItems);
+    console.log("Checkout page - Selected items length:", selectedItems.length);
+
     if (selectedItems.length === 0) {
       console.log("No selected items found, redirecting to cart");
       router.push("/cart");
@@ -84,6 +57,7 @@ export default function CheckoutPage() {
   const handleOrderComplete = (order: any) => {
     console.log("Order created successfully:", order);
     clearCart();
+    clearSelectedItems();
 
     // Redirect to success page with order ID
     router.push(`/order-success?orderId=${order.id}`);
