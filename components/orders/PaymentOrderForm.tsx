@@ -126,8 +126,13 @@ export default function PaymentOrderForm({
     if (authUser?.user_metadata) {
       setFormData((prev) => ({
         ...prev,
-        customer_name: authUser.user_metadata.full_name || "",
+        customer_name:
+          authUser.user_metadata.full_name ||
+          authUser.user_metadata.display_name ||
+          "",
         customer_email: authUser.email || "",
+        customer_phone: authUser.user_metadata.phone || "",
+        shipping_address: authUser.user_metadata.address || "",
       }));
     }
   };
