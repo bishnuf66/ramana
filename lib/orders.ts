@@ -102,19 +102,25 @@ export async function uploadPaymentScreenshot(file: File): Promise<string> {
     // Generate unique filename
     const fileName = `payment-screenshots/${Date.now()}-${file.name}`;
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage (using existing product-images bucket)
     const { error: uploadError } = await supabase.storage
-      .from("payment-screenshots")
-      .upload(fileName, file);
+      .from("product-images")
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
 
     if (uploadError) {
-      throw new Error("Failed to upload payment screenshot");
+      console.error("Storage upload error:", uploadError);
+      throw new Error(
+        `Failed to upload payment screenshot: ${uploadError.message}`,
+      );
     }
 
     // Get public URL
     const {
       data: { publicUrl },
-    } = supabase.storage.from("payment-screenshots").getPublicUrl(fileName);
+    } = supabase.storage.from("product-images").getPublicUrl(fileName);
 
     return publicUrl;
   } catch (error) {
@@ -243,22 +249,33 @@ export async function createOrder(orderData: OrderData): Promise<any> {
       }
     }
 
-    // Check for first-time customer discount
-    const isFirstTimeCustomer = await checkFirstTimeDiscount(
-      orderData.customer_email,
-    );
-    if (isFirstTimeCustomer && !orderData.coupon_code) {
-      // Apply 30% discount for first-time customers
-      discountAmount = Math.round(orderData.total_amount * 0.3);
-      const calculation = calculateDiscount(
-        orderData.total_amount,
-        discountAmount,
+    // Check for first-time customer discount (only for logged-in users)
+    let isFirstTimeCustomer = false;
+    if (user && !orderData.coupon_code) {
+      isFirstTimeCustomer = await checkFirstTimeDiscount(
+        orderData.customer_email,
       );
-      finalAmount = calculation.finalAmount;
+      if (isFirstTimeCustomer) {
+        // Apply FIRST30 coupon for first-time logged-in customers
+        const couponValidation = await validateCouponCode(
+          "FIRST30",
+          orderData.customer_email,
+          orderData.total_amount,
+        );
 
-      toast.success(
-        `First-time customer discount applied! You saved NPR ${discountAmount}`,
-      );
+        if (couponValidation && couponValidation.valid) {
+          discountAmount = couponValidation.discount_amount;
+          const calculation = calculateDiscount(
+            orderData.total_amount,
+            discountAmount,
+          );
+          finalAmount = calculation.finalAmount;
+
+          toast.success(
+            `First-time customer discount applied! You saved NPR ${discountAmount}`,
+          );
+        }
+      }
     }
 
     // Upload payment screenshot if provided (required for all payment methods now)
@@ -321,6 +338,25 @@ export async function createOrder(orderData: OrderData): Promise<any> {
         discountAmount,
         order.id,
       );
+    }
+
+    // Apply FIRST30 coupon usage if first-time discount was applied
+    if (isFirstTimeCustomer && user && !orderData.coupon_code) {
+      // Get FIRST30 coupon details to record usage
+      const first30Coupon = await validateCouponCode(
+        "FIRST30",
+        orderData.customer_email,
+        orderData.total_amount,
+      );
+
+      if (first30Coupon && first30Coupon.valid) {
+        await applyCouponUsage(
+          first30Coupon.coupon_id,
+          orderData.customer_email,
+          discountAmount,
+          order.id,
+        );
+      }
     }
 
     // Update customer discount record for first-time customers
