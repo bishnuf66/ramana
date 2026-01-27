@@ -223,51 +223,137 @@ export async function validateCouponCode(
   productIds?: string[],
 ): Promise<CouponValidationResult | null> {
   try {
-    console.log("Validating coupon:", {
+    console.log("Manually validating coupon:", {
       code,
       customerEmail,
       orderTotal,
       productIds,
     });
 
-    // Try the RPC function first
-    const { data, error } = await supabase.rpc("validate_coupon", {
-      coupon_code: code,
-      customer_email: customerEmail,
-      order_total: orderTotal,
-      product_ids: productIds || null,
-    });
+    // Get current user to check usage
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error("RPC function error:", error);
+    // Get coupon details
+    const { data: coupon, error: couponError } = await supabase
+      .from("coupons")
+      .select("*")
+      .eq("code", code.toUpperCase())
+      .eq("is_active", true)
+      .single();
 
-      // Fallback to direct table validation if RPC function is deleted/broken
-      console.log("Falling back to direct table validation...");
-      return await validateCouponDirect(
-        code,
-        customerEmail,
-        orderTotal,
-        productIds,
-      );
+    if (couponError || !coupon) {
+      return {
+        coupon_id: "",
+        discount_amount: 0,
+        message: "Invalid or inactive coupon code",
+        valid: false,
+      };
     }
 
-    // Return the first result (or null if no results)
-    const result = data && data.length > 0 ? data[0] : null;
+    // Get customer's coupon usage history by user_id
+    let usageHistory = [];
+    if (user) {
+      const { data: history, error: usageError } = await supabase
+        .from("coupon_usage")
+        .select("*")
+        .eq("coupon_id", coupon.id)
+        .eq("user_id", user.id);
 
-    // Enhanced validation based on coupon schema
-    if (result && result.valid) {
-      // Additional client-side validation can be added here if needed
-      // For now, we trust the database function validation
-      console.log("Coupon validated successfully:", {
-        coupon_id: result.coupon_id,
-        discount_amount: result.discount_amount,
-        applicable_products: result.applicable_products,
-      });
+      if (usageError) {
+        console.error("Error fetching coupon usage:", usageError);
+        return {
+          coupon_id: coupon.id,
+          discount_amount: 0,
+          message: "Error validating coupon usage",
+          valid: false,
+        };
+      }
+      usageHistory = history || [];
     }
 
-    return result;
+    // Basic validation checks
+    const now = new Date();
+    const expiresAt = coupon.expires_at ? new Date(coupon.expires_at) : null;
+    const startsAt = coupon.starts_at ? new Date(coupon.starts_at) : null;
+
+    // Check if coupon is expired
+    if (expiresAt && now > expiresAt) {
+      return {
+        coupon_id: coupon.id,
+        discount_amount: 0,
+        message: "Coupon has expired",
+        valid: false,
+      };
+    }
+
+    // Check if coupon has started
+    if (startsAt && now < startsAt) {
+      return {
+        coupon_id: coupon.id,
+        discount_amount: 0,
+        message: "Coupon is not yet active",
+        valid: false,
+      };
+    }
+
+    // Check minimum order amount
+    if (
+      coupon.minimum_order_amount &&
+      orderTotal < coupon.minimum_order_amount
+    ) {
+      return {
+        coupon_id: coupon.id,
+        discount_amount: 0,
+        message: `Minimum order amount of ${coupon.minimum_order_amount} required`,
+        valid: false,
+      };
+    }
+
+    // Check usage limit
+    if (
+      coupon.usage_limit &&
+      usageHistory &&
+      usageHistory.length >= coupon.usage_limit
+    ) {
+      return {
+        coupon_id: coupon.id,
+        discount_amount: 0,
+        message: "Coupon usage limit exceeded",
+        valid: false,
+      };
+    }
+
+    // Check first-time only restriction
+    if (coupon.first_time_only && usageHistory && usageHistory.length > 0) {
+      return {
+        coupon_id: coupon.id,
+        discount_amount: 0,
+        message: "Coupon is for first-time customers only",
+        valid: false,
+      };
+    }
+
+    // Calculate discount
+    let discountAmount = 0;
+    if (coupon.discount_type === "percentage") {
+      discountAmount = (orderTotal * coupon.discount_value) / 100;
+    } else {
+      discountAmount = coupon.discount_value;
+    }
+
+    // Ensure discount doesn't exceed order total
+    discountAmount = Math.min(discountAmount, orderTotal);
+
+    return {
+      coupon_id: coupon.id,
+      discount_amount: discountAmount,
+      message: "Coupon applied successfully",
+      valid: true,
+    };
   } catch (error) {
-    console.error("Error validating coupon:", error);
+    console.error("Error in manual coupon validation:", error);
     return null;
   }
 }
@@ -300,11 +386,23 @@ export async function applyCouponUsage(
   orderId: string,
 ): Promise<boolean> {
   try {
-    const { data, error } = await supabase.rpc("apply_coupon_usage", {
+    // Get current user to get user_id
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.error("No authenticated user found for coupon usage");
+      return false;
+    }
+
+    // Insert coupon usage record directly instead of using RPC function
+    const { error } = await supabase.from("coupon_usage").insert({
       coupon_id: couponId,
-      customer_email: customerEmail,
+      user_id: user.id, // Use user_id instead of customer_email
       discount_amount: discountAmount,
       order_id: orderId,
+      used_at: new Date().toISOString(),
     });
 
     if (error) {
@@ -312,7 +410,7 @@ export async function applyCouponUsage(
       return false;
     }
 
-    return data || false;
+    return true;
   } catch (error) {
     console.error("Error applying coupon usage:", error);
     return false;
