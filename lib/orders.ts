@@ -559,6 +559,123 @@ export async function createOrder(orderData: OrderData): Promise<any> {
   }
 }
 
+// Simple cancellation request functions
+export async function requestOrderCancellation(
+  orderId: string,
+  reason: string,
+  userId: string,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // Check if order exists and belongs to user
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .eq("user_id", userId)
+      .single();
+
+    if (orderError || !order) {
+      return {
+        success: false,
+        message: "Order not found or you don't have permission to cancel it",
+      };
+    }
+
+    // Check if order can be cancelled (within 24 hours and not already processed)
+    const orderDate = new Date(order.created_at);
+    const now = new Date();
+    const hoursSinceOrder =
+      (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60);
+
+    if (hoursSinceOrder > 24) {
+      return {
+        success: false,
+        message: "Orders can only be cancelled within 24 hours of placement",
+      };
+    }
+
+    if (
+      order.status === "cancelled" ||
+      order.status === "shipped" ||
+      order.status === "delivered"
+    ) {
+      return {
+        success: false,
+        message: "This order cannot be cancelled",
+      };
+    }
+
+    // Update order with cancellation request
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update({
+        cancellation_request: true,
+        cancellation_reason: reason,
+        cancellation_requested_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId)
+      .eq("user_id", userId);
+
+    if (updateError) {
+      console.error("Error updating cancellation request:", updateError);
+      return {
+        success: false,
+        message: "Failed to submit cancellation request. Please try again.",
+      };
+    }
+
+    return {
+      success: true,
+      message:
+        "Cancellation request submitted successfully. We'll process it within 24 hours.",
+    };
+  } catch (error) {
+    console.error("Error requesting cancellation:", error);
+    return {
+      success: false,
+      message: "An unexpected error occurred. Please try again.",
+    };
+  }
+}
+
+export async function withdrawCancellationRequest(
+  orderId: string,
+  userId: string,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        cancellation_request: false,
+        cancellation_reason: null,
+        cancellation_requested_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error withdrawing cancellation request:", error);
+      return {
+        success: false,
+        message: "Failed to withdraw cancellation request. Please try again.",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Cancellation request withdrawn successfully.",
+    };
+  } catch (error) {
+    console.error("Error withdrawing cancellation request:", error);
+    return {
+      success: false,
+      message: "An unexpected error occurred. Please try again.",
+    };
+  }
+}
+
 // Helper function to get welcome message for non-logged users
 export function getWelcomeMessage(): string {
   return "Sign up and get up to 30% off on your first order!";

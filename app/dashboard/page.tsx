@@ -17,6 +17,7 @@ import {
   Trash2,
   Save,
   X,
+  XCircle,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { signOut } from "@/lib/supabase/auth";
@@ -26,6 +27,10 @@ import Image from "next/image";
 import { useCart } from "@/components/context/CartContext";
 import { useFavorites } from "@/components/context/FavoritesContext";
 import ProfileSetting from "@/components/dashboard/ProfileSetting";
+import {
+  requestOrderCancellation,
+  withdrawCancellationRequest,
+} from "@/lib/orders";
 
 interface UserProfile {
   id: string;
@@ -47,6 +52,9 @@ interface UserOrder {
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   items: any;
   created_at: string;
+  cancellation_request?: boolean;
+  cancellation_reason?: string;
+  cancellation_requested_at?: string;
 }
 
 interface UserReview {
@@ -79,6 +87,9 @@ export default function UserDashboard() {
       comment: "",
     },
   );
+  const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
   const loadUserData = async () => {
     try {
       setLoading(true);
@@ -235,6 +246,92 @@ export default function UserDashboard() {
   const handleCancelEdit = () => {
     setEditingReview(null);
     setEditForm({ rating: 0, comment: "" });
+  };
+
+  const handleCancellationRequest = async (orderId: string) => {
+    if (!cancellationReason.trim()) {
+      toast.error("Please provide a reason for cancellation");
+      return;
+    }
+
+    if (!user) {
+      toast.error("User not authenticated");
+      return;
+    }
+
+    try {
+      setCancellingOrder(orderId);
+      const result = await requestOrderCancellation(
+        orderId,
+        cancellationReason,
+        user.id,
+      );
+
+      if (result.success) {
+        toast.success(result.message);
+        setShowCancellationModal(false);
+        setCancellationReason("");
+        setCancellingOrder(null);
+        // Reload orders to get updated status
+        loadUserData();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error("Error requesting cancellation:", error);
+      toast.error("Failed to submit cancellation request");
+    } finally {
+      setCancellingOrder(null);
+    }
+  };
+
+  const handleWithdrawCancellation = async (orderId: string) => {
+    if (!user) {
+      toast.error("User not authenticated");
+      return;
+    }
+
+    try {
+      const result = await withdrawCancellationRequest(orderId, user.id);
+
+      if (result.success) {
+        toast.success(result.message);
+        // Reload orders to get updated status
+        loadUserData();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error("Error withdrawing cancellation:", error);
+      toast.error("Failed to withdraw cancellation request");
+    }
+  };
+
+  const openCancellationModal = (orderId: string) => {
+    setCancellingOrder(orderId);
+    setShowCancellationModal(true);
+    setCancellationReason("");
+  };
+
+  const closeCancellationModal = () => {
+    setShowCancellationModal(false);
+    setCancellationReason("");
+    setCancellingOrder(null);
+  };
+
+  const canCancelOrder = (order: UserOrder) => {
+    const orderDate = new Date(order.created_at);
+    const now = new Date();
+    const hoursSinceOrder =
+      (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60);
+
+    return (
+      hoursSinceOrder <= 24 &&
+      order.status !== "cancelled" &&
+      order.status !== "shipped" &&
+      order.status !== "delivered" &&
+      !order.cancellation_request
+    );
   };
 
   if (loading) {
@@ -518,6 +615,51 @@ export default function UserDashboard() {
                             {JSON.stringify(order.items).length} items
                           </p>
                         </div>
+
+                        {/* Cancellation Status and Actions */}
+                        {order.cancellation_request && (
+                          <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                                  Cancellation Requested
+                                </p>
+                                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                                  Reason: {order.cancellation_reason}
+                                </p>
+                                {order.cancellation_requested_at && (
+                                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                                    Requested:{" "}
+                                    {new Date(
+                                      order.cancellation_requested_at,
+                                    ).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                              <button
+                                onClick={() =>
+                                  handleWithdrawCancellation(order.id)
+                                }
+                                className="px-3 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors"
+                              >
+                                Withdraw Request
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Cancellation Button */}
+                        {canCancelOrder(order) && (
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={() => openCancellationModal(order.id)}
+                              className="flex items-center gap-2 px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Request Cancellation
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -711,6 +853,64 @@ export default function UserDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Cancellation Request Modal */}
+      {showCancellationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Request Order Cancellation
+              </h3>
+              <button
+                onClick={closeCancellationModal}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Reason for Cancellation
+              </label>
+              <textarea
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Please provide a reason for your cancellation request..."
+              />
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                <strong>Note:</strong> Orders can only be cancelled within 24
+                hours of placement. Once submitted, your request will be
+                processed within 24 hours.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={closeCancellationModal}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  cancellingOrder && handleCancellationRequest(cancellingOrder)
+                }
+                disabled={!cancellationReason.trim() || !cancellingOrder}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {cancellingOrder ? "Submitting..." : "Submit Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
