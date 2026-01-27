@@ -281,32 +281,61 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const increaseQuantity = useCallback((id: number | string) => {
-    setCartReferences((prevReferences) =>
-      prevReferences.map((ref) =>
+    setCartReferences((prevReferences) => {
+      const newReferences = prevReferences.map((ref) =>
         ref.product_id === String(id)
           ? { ...ref, quantity: ref.quantity + 1 }
           : ref,
-      ),
-    );
+      );
+
+      // IMMEDIATE UI UPDATE: Update enriched cart
+      setCart((prevCart) =>
+        prevCart.map((item) =>
+          item.id === String(id)
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        ),
+      );
+
+      return newReferences;
+    });
   }, []);
 
   const decreaseQuantity = useCallback(
     (id: number | string) => {
-      setCartReferences((prevReferences) =>
-        prevReferences.map((ref) =>
+      setCartReferences((prevReferences) => {
+        const newReferences = prevReferences.map((ref) =>
           ref.product_id === String(id) && ref.quantity > 1
             ? { ...ref, quantity: ref.quantity - 1 }
             : ref,
-        ),
-      );
+        );
+
+        // IMMEDIATE UI UPDATE: Update enriched cart
+        setCart((prevCart) =>
+          prevCart.map((item) =>
+            item.id === String(id) && item.quantity > 1
+              ? { ...item, quantity: item.quantity - 1 }
+              : item,
+          ),
+        );
+
+        return newReferences;
+      });
     },
     [userId],
   );
 
   const removeFromCart = useCallback((id: number | string) => {
-    setCartReferences((prevReferences) =>
-      prevReferences.filter((ref) => ref.product_id !== String(id)),
-    );
+    setCartReferences((prevReferences) => {
+      const newReferences = prevReferences.filter(
+        (ref) => ref.product_id !== String(id),
+      );
+
+      // IMMEDIATE UI UPDATE: Remove from enriched cart
+      setCart((prevCart) => prevCart.filter((item) => item.id !== String(id)));
+
+      return newReferences;
+    });
     toast.success("Removed from cart");
   }, []);
 
@@ -320,19 +349,39 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     (id: number | string, newQuantity: number) => {
       if (newQuantity <= 0) {
         // Remove item if quantity is 0 or less
-        setCartReferences((prevReferences) =>
-          prevReferences.filter((ref) => ref.product_id !== String(id)),
-        );
+        setCartReferences((prevReferences) => {
+          const newReferences = prevReferences.filter(
+            (ref) => ref.product_id !== String(id),
+          );
+
+          // IMMEDIATE UI UPDATE: Remove from enriched cart
+          setCart((prevCart) =>
+            prevCart.filter((item) => item.id !== String(id)),
+          );
+
+          return newReferences;
+        });
         toast.success("Item removed from cart");
       } else {
         // Update quantity
-        setCartReferences((prevReferences) =>
-          prevReferences.map((ref) =>
+        setCartReferences((prevReferences) => {
+          const newReferences = prevReferences.map((ref) =>
             ref.product_id === String(id)
               ? { ...ref, quantity: newQuantity }
               : ref,
-          ),
-        );
+          );
+
+          // IMMEDIATE UI UPDATE: Update enriched cart
+          setCart((prevCart) =>
+            prevCart.map((item) =>
+              item.id === String(id)
+                ? { ...item, quantity: newQuantity }
+                : item,
+            ),
+          );
+
+          return newReferences;
+        });
       }
     },
     [],
