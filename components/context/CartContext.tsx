@@ -16,9 +16,17 @@ import { Tables } from "@/types/database.types";
 // Use the generated Supabase type
 type Product = Tables<"products">;
 
-// Cart item type that extends Product with quantity
+// Cart item reference stored in database
+type CartItemReference = {
+  product_id: string;
+  quantity: number;
+  added_at: string;
+};
+
+// Cart item type with full product data (for UI)
 type CartItem = Product & {
   quantity: number;
+  added_at: string;
 };
 
 interface CartContextType {
@@ -35,6 +43,8 @@ interface CartContextType {
   clearCart: () => void;
   getTotalPrice: () => number;
   getTotalItems: () => number;
+  refreshCart: () => void; // New function to refresh cart with current data
+  updateQuantity: (id: number | string, quantity: number) => void; // New function to set specific quantity
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -43,36 +53,119 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartReferences, setCartReferences] = useState<CartItemReference[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track auth changes
   useEffect(() => {
-    supabase.auth
-      .getUser()
-      .then(({ data }) => setUserId(data.user?.id ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_, session) => {
+    supabase.auth.getUser().then(({ data }) => {
+      console.log("Initial auth check - user ID:", data.user?.id);
+      setUserId(data.user?.id ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state change:", event, "user ID:", session?.user?.id);
       setUserId(session?.user?.id ?? null);
       setSynced(false); // re-sync on login/logout
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Persist to Supabase when logged in
+  // Function to enrich cart references with current product data
+  const enrichCartWithProductData = useCallback(
+    async (references: CartItemReference[]): Promise<CartItem[]> => {
+      if (references.length === 0) return [];
+
+      try {
+        const productIds = references.map((ref) => ref.product_id);
+        console.log("Fetching products for IDs:", productIds);
+
+        // Fetch current product data
+        const { data: products, error } = await supabase
+          .from("products")
+          .select("*")
+          .in("id", productIds);
+
+        if (error) {
+          console.error("Error fetching products for cart:", error);
+          return [];
+        }
+
+        console.log("Fetched products:", products);
+
+        // Merge cart references with current product data
+        return references
+          .map((ref) => {
+            const product = products.find((p) => p.id === ref.product_id);
+            if (!product) {
+              console.warn(
+                `Product ${ref.product_id} not found, removing from cart`,
+              );
+              return null;
+            }
+
+            return {
+              ...product,
+              quantity: ref.quantity,
+              added_at: ref.added_at,
+            };
+          })
+          .filter(Boolean) as CartItem[];
+      } catch (error) {
+        console.error("Error enriching cart:", error);
+        return [];
+      }
+    },
+    [],
+  );
+
+  // Refresh cart with current product data
+  const refreshCart = useCallback(async () => {
+    if (!userId || cartReferences.length === 0) return;
+
+    const enrichedCart = await enrichCartWithProductData(cartReferences);
+    setCart(enrichedCart);
+  }, [userId, cartReferences, enrichCartWithProductData]);
+
+  // Persist to Supabase when logged in (store only references)
   useEffect(() => {
-    if (!userId || !synced) return;
+    console.log("Persistence useEffect triggered:");
+    console.log("- userId:", userId);
+    console.log("- synced:", synced);
+    console.log("- cartReferences length:", cartReferences.length);
+
+    if (!userId) {
+      console.log("Skipping persistence - no userId");
+      return;
+    }
+
+    // Allow persistence even if not synced, as long as we have userId and cart data
+    if (!synced && cartReferences.length === 0) {
+      console.log("Skipping persistence - not synced and no cart data");
+      return;
+    }
+
     if (persistTimeoutRef.current) {
       clearTimeout(persistTimeoutRef.current);
     }
 
     persistTimeoutRef.current = setTimeout(async () => {
+      console.log("Persisting cart to database...");
+      console.log("Data to persist:", cartReferences);
+
       const { error } = await supabase.from("user_cart").upsert({
         user_id: userId,
-        items: cart,
+        items: cartReferences,
         updated_at: new Date().toISOString(),
       });
-      if (error) console.error("cart persist error", error);
+
+      if (error) {
+        console.error("Cart persist error:", error);
+        toast.error("Failed to save cart to database");
+      } else {
+        console.log("Cart successfully persisted to database");
+      }
     }, 500);
 
     return () => {
@@ -80,17 +173,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         clearTimeout(persistTimeoutRef.current);
       }
     };
-  }, [cart, userId, synced]);
+  }, [cartReferences, userId, synced]);
 
-  // Load cart from Supabase when logged in
+  // Load cart references from Supabase when logged in
   useEffect(() => {
+    console.log("Load cart useEffect triggered - userId:", userId);
+
     if (!userId) {
+      console.log("No userId, clearing cart");
       setCart([]);
+      setCartReferences([]);
       setSynced(true);
       return;
     }
 
     const loadCart = async () => {
+      console.log("Loading cart for user:", userId);
       try {
         const { data: remoteRow, error } = await supabase
           .from("user_cart")
@@ -104,14 +202,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
-        const remoteCart: CartItem[] = (remoteRow?.items || []).map(
+        const references: CartItemReference[] = (remoteRow?.items || []).map(
           (item: any) => ({
-            ...item,
+            product_id: item.product_id || item.id, // Handle both old and new format
             quantity: item.quantity || 1,
+            added_at: item.added_at || new Date().toISOString(),
           }),
         );
 
-        setCart(remoteCart);
+        console.log("Loaded cart references:", references);
+        setCartReferences(references);
+
+        // Enrich with current product data
+        console.log("Enriching cart with product data...");
+        const enrichedCart = await enrichCartWithProductData(references);
+        console.log("Enriched cart:", enrichedCart);
+        setCart(enrichedCart);
+
+        console.log("Setting synced to true");
         setSynced(true);
       } catch (error) {
         console.error("Error loading cart:", error);
@@ -120,7 +228,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     loadCart();
-  }, [userId]);
+  }, [userId, enrichCartWithProductData]);
 
   const addToCart = useCallback(
     (
@@ -134,90 +242,101 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      setCart((prevCart) => {
-        const existingItem = prevCart.find((item) => item.id === product.id);
-        if (existingItem) {
-          return prevCart.map((item) =>
-            item.id === product.id
+      console.log("Adding to cart:", product);
+      console.log("Current userId:", userId);
+      console.log("Current synced state:", synced);
+
+      setCartReferences((prevReferences) => {
+        const existingRef = prevReferences.find(
+          (ref) => ref.product_id === product.id,
+        );
+        let newReferences;
+
+        if (existingRef) {
+          newReferences = prevReferences.map((ref) =>
+            ref.product_id === product.id
               ? {
-                  ...item,
-                  quantity: (item.quantity || 0) + (product.quantity || 1),
+                  ...ref,
+                  quantity: ref.quantity + (product.quantity || 1),
                 }
-              : item,
+              : ref,
           );
+        } else {
+          // Add new reference
+          const newRef: CartItemReference = {
+            product_id: String(product.id),
+            quantity: product.quantity || 1,
+            added_at: new Date().toISOString(),
+          };
+          newReferences = [...prevReferences, newRef];
         }
-        return [
-          ...prevCart,
-          { ...product, quantity: product.quantity || 1 } as CartItem,
-        ];
+
+        console.log("New cart references:", newReferences);
+        return newReferences;
       });
-      toast.success(`${product.title} added to cart`);
+
+      toast.success("Added to cart!");
     },
-    [userId],
+    [userId, synced],
   );
 
-  const increaseQuantity = useCallback(
-    (id: number | string) => {
-      if (!userId) {
-        toast.error("Please login to modify cart");
-        return;
-      }
-
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.id === id
-            ? { ...item, quantity: (item.quantity || 0) + 1 }
-            : item,
-        ),
-      );
-      toast.success("Quantity increased");
-    },
-    [userId],
-  );
+  const increaseQuantity = useCallback((id: number | string) => {
+    setCartReferences((prevReferences) =>
+      prevReferences.map((ref) =>
+        ref.product_id === String(id)
+          ? { ...ref, quantity: ref.quantity + 1 }
+          : ref,
+      ),
+    );
+  }, []);
 
   const decreaseQuantity = useCallback(
     (id: number | string) => {
-      if (!userId) {
-        toast.error("Please login to modify cart");
-        return;
-      }
-
-      setCart((prevCart) =>
-        prevCart
-          .map((item) =>
-            item.id === id
-              ? { ...item, quantity: (item.quantity || 0) - 1 }
-              : item,
-          )
-          .filter((item) => (item.quantity || 0) > 0),
+      setCartReferences((prevReferences) =>
+        prevReferences.map((ref) =>
+          ref.product_id === String(id) && ref.quantity > 1
+            ? { ...ref, quantity: ref.quantity - 1 }
+            : ref,
+        ),
       );
-      toast.success("Quantity decreased");
     },
     [userId],
   );
 
-  const removeFromCart = useCallback(
-    (id: number | string) => {
-      if (!userId) {
-        toast.error("Please login to modify cart");
-        return;
-      }
-
-      setCart((prevCart) => prevCart.filter((item) => item.id !== id));
-      toast.error("Item removed from cart");
-    },
-    [userId],
-  );
+  const removeFromCart = useCallback((id: number | string) => {
+    setCartReferences((prevReferences) =>
+      prevReferences.filter((ref) => ref.product_id !== String(id)),
+    );
+    toast.success("Removed from cart");
+  }, []);
 
   const clearCart = useCallback(() => {
-    if (!userId) {
-      toast.error("Please login to modify cart");
-      return;
-    }
-
+    setCartReferences([]);
     setCart([]);
-    toast.error("Cart cleared");
-  }, [userId]);
+    toast.success("Cart cleared");
+  }, []);
+
+  const updateQuantity = useCallback(
+    (id: number | string, newQuantity: number) => {
+      if (newQuantity <= 0) {
+        // Remove item if quantity is 0 or less
+        setCartReferences((prevReferences) =>
+          prevReferences.filter((ref) => ref.product_id !== String(id)),
+        );
+        toast.success("Item removed from cart");
+      } else {
+        // Update quantity
+        setCartReferences((prevReferences) =>
+          prevReferences.map((ref) =>
+            ref.product_id === String(id)
+              ? { ...ref, quantity: newQuantity }
+              : ref,
+          ),
+        );
+      }
+    },
+    [],
+  );
 
   const getTotalPrice = useCallback(() => {
     return cart.reduce(
@@ -240,6 +359,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       clearCart,
       getTotalPrice,
       getTotalItems,
+      refreshCart,
+      updateQuantity,
     }),
     [
       cart,
@@ -250,6 +371,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       clearCart,
       getTotalPrice,
       getTotalItems,
+      refreshCart,
+      updateQuantity,
     ],
   );
 

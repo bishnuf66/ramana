@@ -24,6 +24,12 @@ export default function FavoritesPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Debug: Log favorites data
+  useEffect(() => {
+    console.log("Favorites page - favorites data:", favorites);
+    console.log("Favorites page - favorites length:", favorites.length);
+  }, [favorites]);
+
   // Check authentication status
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,6 +38,7 @@ export default function FavoritesPage() {
           data: { user },
         } = await supabase.auth.getUser();
         setUserId(user?.id ?? null);
+        console.log("Favorites page - user ID:", user?.id);
       } catch (error) {
         console.error("Authentication error:", error);
       } finally {
@@ -55,8 +62,8 @@ export default function FavoritesPage() {
       comparison = a.price - b.price;
     } else if (sortBy === "addedDate") {
       comparison =
-        new Date(b.created_at || "").getTime() -
-        new Date(a.created_at || "").getTime();
+        new Date(b.added_at || "").getTime() -
+        new Date(a.added_at || "").getTime();
     }
     return sortOrder === "asc" ? comparison : -comparison;
   });

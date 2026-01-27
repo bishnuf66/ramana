@@ -9,10 +9,12 @@ import {
   MessageCircle,
   Sparkles,
   Gift,
+  Plus,
+  Minus,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Tables } from "../../types/database.types";
 
 // Use the generated Supabase type
@@ -30,19 +32,99 @@ export default function ProductCard({
   product,
   viewMode = "grid",
 }: ProductCardProps) {
-  const { addToCart } = useCart();
+  const {
+    addToCart,
+    increaseQuantity,
+    decreaseQuantity,
+    updateQuantity,
+    cart,
+  } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
   const [isHovered, setIsHovered] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
+  // Debounce function for quantity updates
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Check if product is already in cart and get its quantity
+  const cartItem = cart.find((item) => item.id === product.id);
+  const isInCart = !!cartItem;
+  const currentQuantity = cartItem?.quantity || 0;
+
+  // Update local quantity when cart quantity changes
+  useEffect(() => {
+    if (isInCart && currentQuantity > 0) {
+      setQuantity(currentQuantity);
+    }
+  }, [currentQuantity, isInCart]);
+
+  // Debounced function to update cart quantity
+  const debouncedUpdateQuantity = useCallback(
+    (newQuantity: number) => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      debounceTimeoutRef.current = setTimeout(() => {
+        updateQuantity(product.id, newQuantity);
+      }, 300); // 300ms debounce delay
+    },
+    [product.id, updateQuantity],
+  );
 
   const handleAddToCart = () => {
-    addToCart({
-      id: product.id,
-      title: product.title,
-      price: product.discount_price || product.price,
-      cover_image: product.cover_image || "/placeholder.jpg",
-      quantity: 1,
-    });
+    if (isInCart) {
+      // If already in cart, add selected quantity to existing
+      const newTotalQuantity = currentQuantity + quantity;
+      updateQuantity(product.id, newTotalQuantity);
+    } else {
+      // If not in cart, add with selected quantity
+      addToCart({
+        id: product.id,
+        title: product.title,
+        price: product.discount_price || product.price,
+        cover_image: product.cover_image || "/placeholder.jpg",
+        quantity: quantity,
+      });
+    }
   };
+
+  const handleIncreaseQuantity = () => {
+    if (isInCart) {
+      // Update cart quantity with debounce
+      debouncedUpdateQuantity(currentQuantity + 1);
+    } else {
+      // Update local quantity
+      setQuantity((prev) => Math.min(prev + 1, 99)); // Max 99 items
+    }
+  };
+
+  const handleDecreaseQuantity = () => {
+    if (isInCart) {
+      if (currentQuantity > 1) {
+        // Update cart quantity with debounce
+        debouncedUpdateQuantity(currentQuantity - 1);
+      } else {
+        // If quantity is 1, remove from cart immediately (no debounce needed)
+        if (debounceTimeoutRef.current) {
+          clearTimeout(debounceTimeoutRef.current);
+        }
+        updateQuantity(product.id, 0);
+      }
+    } else {
+      // Update local quantity
+      setQuantity((prev) => Math.max(prev - 1, 1)); // Min 1 item
+    }
+  };
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -276,6 +358,35 @@ Thank you! 🌸`;
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Quantity Controls */}
+                <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded-lg p-1">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleDecreaseQuantity}
+                    disabled={!isInCart && quantity <= 1}
+                    className="w-7 h-7 flex items-center justify-center rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </motion.button>
+
+                  <div className="w-8 text-center">
+                    <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                      {isInCart ? currentQuantity : quantity}
+                    </span>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleIncreaseQuantity}
+                    disabled={isInCart && currentQuantity >= 99}
+                    className="w-7 h-7 flex items-center justify-center rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </motion.button>
+                </div>
+
                 <motion.button
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   whileTap={{ scale: 0.95 }}
@@ -302,12 +413,16 @@ Thank you! 🌸`;
                   whileTap={{ scale: 0.95 }}
                   onClick={handleAddToCart}
                   disabled={!(product.stock && product.stock > 0)}
-                  className="relative px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl hover:shadow-lg hover:shadow-rose-500/50 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all flex items-center gap-2 overflow-hidden group/cart"
+                  className={`relative px-6 py-3 rounded-xl hover:shadow-lg disabled:cursor-not-allowed transition-all flex items-center gap-2 overflow-hidden group/cart ${
+                    isInCart
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-green-500/50 text-white"
+                      : "bg-gradient-to-r from-rose-500 to-pink-600 hover:shadow-rose-500/50 text-white disabled:from-gray-400 disabled:to-gray-500"
+                  }`}
                 >
                   <div className="absolute inset-0 bg-white/20 translate-x-full group-hover/cart:translate-x-0 transition-transform duration-300" />
                   <ShoppingCart className="w-5 h-5 relative z-10" />
                   <span className="font-semibold relative z-10">
-                    Add to Cart
+                    {isInCart ? `In Cart (${currentQuantity})` : "Add to Cart"}
                   </span>
                 </motion.button>
               </div>
@@ -512,6 +627,35 @@ Thank you! 🌸`;
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-2">
+          {/* Quantity Controls */}
+          <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg p-1">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleDecreaseQuantity}
+              disabled={!isInCart && quantity <= 1}
+              className="w-8 h-8 flex items-center justify-center rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Minus className="w-4 h-4" />
+            </motion.button>
+
+            <div className="flex-1 text-center">
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {isInCart ? currentQuantity : quantity}
+              </span>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleIncreaseQuantity}
+              disabled={isInCart && currentQuantity >= 99}
+              className="w-8 h-8 flex items-center justify-center rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </motion.button>
+          </div>
+
           <div className="flex gap-2">
             <motion.button
               whileHover={{ scale: 1.03 }}
@@ -540,11 +684,17 @@ Thank you! 🌸`;
             whileTap={{ scale: 0.97 }}
             onClick={handleAddToCart}
             disabled={!(product.stock && product.stock > 0)}
-            className="w-full py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-xl hover:shadow-lg hover:shadow-rose-500/30 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 font-semibold text-sm relative overflow-hidden group/add"
+            className={`w-full py-2.5 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 font-semibold text-sm relative overflow-hidden group/add ${
+              isInCart
+                ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-green-500/30 text-white"
+                : "bg-gradient-to-r from-rose-500 to-pink-600 hover:shadow-rose-500/30 text-white disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed"
+            }`}
           >
             <div className="absolute inset-0 bg-white/20 translate-x-full group-hover/add:translate-x-0 transition-transform duration-300" />
             <ShoppingCart className="w-4 h-4 relative z-10" />
-            <span className="relative z-10">Add to Cart</span>
+            <span className="relative z-10">
+              {isInCart ? `In Cart (${currentQuantity})` : "Add to Cart"}
+            </span>
           </motion.button>
         </div>
       </div>

@@ -22,6 +22,12 @@ export default function Cart() {
     getTotalPrice,
     getTotalItems,
   } = useCart();
+
+  // Debug: Log cart data when it changes
+  useEffect(() => {
+    console.log("Cart page - cart data:", cart);
+    console.log("Cart page - cart length:", cart.length);
+  }, [cart]);
   const { addToCheckout } = useCheckout();
 
   const [sortBy, setSortBy] = useState<"name" | "price" | "quantity">("name");

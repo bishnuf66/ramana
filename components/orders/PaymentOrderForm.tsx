@@ -259,10 +259,14 @@ export default function PaymentOrderForm({
 
       const order = await createOrder(orderData);
       toast.success("Order placed successfully!");
-      onOrderComplete(order);
+
+      // Redirect to success page with order ID and items
+      const itemsData = encodeURIComponent(JSON.stringify(items));
+      window.location.href = `/order-success?orderId=${order.id}&items=${itemsData}`;
     } catch (error) {
       console.error("Error placing order:", error);
-      toast.error("Failed to place order");
+      toast.error("Failed to place order. Please try again.");
+      // Stay on the same page so user can retry
     } finally {
       setLoading(false);
     }
