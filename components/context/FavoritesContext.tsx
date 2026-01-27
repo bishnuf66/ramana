@@ -66,22 +66,24 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!lastAction.type) return;
 
-    switch (lastAction.type) {
-      case "add":
-        toast.success(`${lastAction.productName} added to favorites`);
-        break;
-      case "remove":
-        toast.success("Product removed from favorites");
-        break;
-      case "clear":
-        toast.success("All favorites cleared");
-        break;
-    }
-
-    // Reset the action after showing the toast
+    // Use setTimeout to ensure this runs after the current render cycle
     const timer = setTimeout(() => {
+      switch (lastAction.type) {
+        case "add":
+          toast.success(`${lastAction.productName} added to favorites`);
+          break;
+        case "remove":
+          toast.success("Product removed from favorites");
+          break;
+        case "clear":
+          toast.success("All favorites cleared");
+          break;
+      }
+
+      // Reset the action after showing the toast
       setLastAction({ type: null });
-    }, 100);
+    }, 0);
+
     return () => clearTimeout(timer);
   }, [lastAction]);
 
@@ -218,19 +220,24 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleFavorite = useCallback((product: Product) => {
+    console.log("toggleFavorite called for product:", product.title);
     setFavorites((prevFavorites) => {
+      console.log("Previous favorites count:", prevFavorites.length);
       const existingFavorite = prevFavorites.find(
         (fav) => fav.id === product.id,
       );
       if (existingFavorite) {
         // Remove from favorites
+        console.log("Removing from favorites");
         setLastAction({ type: "remove" });
         return prevFavorites.filter((fav) => fav.id !== product.id);
       } else {
         // Add to favorites - check if already exists to prevent duplicate
         if (prevFavorites.some((fav) => fav.id === product.id)) {
+          console.log("Product already in favorites, not adding");
           return prevFavorites; // Already exists, don't add again
         }
+        console.log("Adding to favorites");
         const withAddedAt: Product = {
           ...product,
         };

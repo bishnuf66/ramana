@@ -47,6 +47,7 @@ export default function ProductCard({
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    console.log("Favorite button clicked for product:", product.title);
     toggleFavorite(product);
   };
 
@@ -196,6 +197,7 @@ Thank you! 🌸`;
                 </h3>
               </div>
               <motion.button
+                type="button"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleFavorite}
@@ -381,6 +383,7 @@ Thank you! 🌸`;
 
         {/* Favorite Button */}
         <motion.button
+          type="button"
           whileHover={{ scale: 1.15 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleFavorite}

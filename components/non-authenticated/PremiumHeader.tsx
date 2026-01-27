@@ -214,6 +214,7 @@ export default function PremiumHeader() {
 
               {/* Favorites */}
               <motion.button
+                type="button"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => {
