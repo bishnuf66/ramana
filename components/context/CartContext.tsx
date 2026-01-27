@@ -42,20 +42,33 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window !== "undefined") {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  // Set isClient to true after mount
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Load cart from localStorage only on client
+  useEffect(() => {
+    if (isClient) {
       const storedCart = localStorage.getItem("cart");
       if (storedCart) {
-        const parsedCart = JSON.parse(storedCart);
-        // Ensure all items have quantity
-        return parsedCart.map((item: any) => ({
-          ...item,
-          quantity: item.quantity || 1,
-        }));
+        try {
+          const parsedCart = JSON.parse(storedCart);
+          // Ensure all items have quantity
+          const cartWithQuantity = parsedCart.map((item: any) => ({
+            ...item,
+            quantity: item.quantity || 1,
+          }));
+          setCart(cartWithQuantity);
+        } catch (error) {
+          console.error("Error parsing cart from localStorage:", error);
+        }
       }
     }
-    return [];
-  });
+  }, [isClient]);
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,10 +88,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isClient) return;
     if (userId) return;
     localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart, userId]);
+  }, [cart, userId, isClient]);
 
   // Persist to Supabase when logged in
   useEffect(() => {
@@ -105,7 +118,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Initial sync between local and remote on login
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isClient) return;
 
     if (!userId) {
       const localCart: CartItem[] = JSON.parse(
@@ -176,7 +189,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     sync();
-  }, [userId]);
+  }, [userId, isClient]);
 
   const addToCart = useCallback(
     (

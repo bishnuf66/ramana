@@ -46,6 +46,7 @@ export default function ProductCard({
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     toggleFavorite(product);
   };
 

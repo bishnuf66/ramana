@@ -48,15 +48,58 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(
 );
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavorites] = useState<Product[]>(() => {
-    if (typeof window !== "undefined") {
-      const storedFavorites = localStorage.getItem("favorites");
-      return storedFavorites ? JSON.parse(storedFavorites) : [];
-    }
-    return [];
-  });
+  const [favorites, setFavorites] = useState<Product[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [lastAction, setLastAction] = useState<{
+    type: "add" | "remove" | "clear" | null;
+    productName?: string;
+  }>({ type: null });
+
+  // Set isClient to true after mount
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Handle toast notifications based on last action
+  useEffect(() => {
+    if (!lastAction.type) return;
+
+    switch (lastAction.type) {
+      case "add":
+        toast.success(`${lastAction.productName} added to favorites`);
+        break;
+      case "remove":
+        toast.success("Product removed from favorites");
+        break;
+      case "clear":
+        toast.success("All favorites cleared");
+        break;
+    }
+
+    // Reset the action after showing the toast
+    const timer = setTimeout(() => {
+      setLastAction({ type: null });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [lastAction]);
+
+  // Load favorites from localStorage only on client
+  useEffect(() => {
+    if (isClient && !userId) {
+      const storedFavorites = localStorage.getItem("favorites");
+      if (storedFavorites) {
+        try {
+          const parsedFavorites = JSON.parse(storedFavorites);
+          setFavorites(parsedFavorites);
+        } catch (error) {
+          console.error("Error parsing favorites from localStorage:", error);
+        }
+      }
+      setSynced(true);
+    }
+  }, [isClient, userId]);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -71,10 +114,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isClient) return;
     if (userId) return;
     localStorage.setItem("favorites", JSON.stringify(favorites));
-  }, [favorites, userId]);
+  }, [favorites, userId, isClient]);
 
   useEffect(() => {
     if (!userId || !synced) return;
@@ -99,7 +142,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, [favorites, userId, synced]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!isClient) return;
 
     if (!userId) {
       const localFavs: Product[] =
@@ -145,7 +188,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     };
 
     sync();
-  }, [userId]);
+  }, [userId, isClient]);
 
   const addToFavorites = useCallback((product: Product) => {
     setFavorites((prevFavorites) => {
@@ -153,27 +196,25 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         (fav) => fav.id === product.id,
       );
       if (existingFavorite) {
-        toast.info("Product already in favorites");
         return prevFavorites;
       }
       const withAddedAt: Product = {
         ...product,
       };
-      toast.success(`${product.title} added to favorites`);
+      setLastAction({ type: "add", productName: product.title });
       return [...prevFavorites, withAddedAt];
     });
   }, []);
 
-  const removeFromFavorites = useCallback((id: number | string) => {
+  const removeFromFavorites = useCallback((id: string) => {
     setFavorites((prevFavorites) => {
       const product = prevFavorites.find((fav) => fav.id === id);
       if (!product) {
-        toast.error("Product not found in favorites");
         return prevFavorites;
       }
+      setLastAction({ type: "remove" });
       return prevFavorites.filter((fav) => fav.id !== id);
     });
-    toast.success("Product removed from favorites");
   }, []);
 
   const toggleFavorite = useCallback((product: Product) => {
@@ -183,17 +224,17 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       );
       if (existingFavorite) {
         // Remove from favorites
-        toast.success("Product removed from favorites");
+        setLastAction({ type: "remove" });
         return prevFavorites.filter((fav) => fav.id !== product.id);
       } else {
         // Add to favorites - check if already exists to prevent duplicate
         if (prevFavorites.some((fav) => fav.id === product.id)) {
           return prevFavorites; // Already exists, don't add again
         }
-        toast.success("Product added to favorites");
         const withAddedAt: Product = {
           ...product,
         };
+        setLastAction({ type: "add", productName: product.title });
         return [...prevFavorites, withAddedAt];
       }
     });
@@ -201,7 +242,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   const clearFavorites = useCallback(() => {
     setFavorites([]);
-    toast.success("Favorites cleared");
+    setLastAction({ type: "clear" });
   }, []);
 
   const isFavorite = useCallback(
@@ -225,7 +266,15 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       getTotalFavorites,
       toggleFavorite,
     }),
-    [favorites],
+    [
+      favorites,
+      addToFavorites,
+      removeFromFavorites,
+      clearFavorites,
+      isFavorite,
+      getTotalFavorites,
+      toggleFavorite,
+    ],
   );
 
   return (
