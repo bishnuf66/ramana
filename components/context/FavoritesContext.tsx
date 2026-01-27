@@ -220,24 +220,19 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleFavorite = useCallback((product: Product) => {
-    console.log("toggleFavorite called for product:", product.title);
     setFavorites((prevFavorites) => {
-      console.log("Previous favorites count:", prevFavorites.length);
       const existingFavorite = prevFavorites.find(
         (fav) => fav.id === product.id,
       );
       if (existingFavorite) {
         // Remove from favorites
-        console.log("Removing from favorites");
         setLastAction({ type: "remove" });
         return prevFavorites.filter((fav) => fav.id !== product.id);
       } else {
         // Add to favorites - check if already exists to prevent duplicate
         if (prevFavorites.some((fav) => fav.id === product.id)) {
-          console.log("Product already in favorites, not adding");
           return prevFavorites; // Already exists, don't add again
         }
-        console.log("Adding to favorites");
         const withAddedAt: Product = {
           ...product,
         };

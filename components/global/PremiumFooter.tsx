@@ -207,15 +207,11 @@ export default function PremiumFooter() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="border-t border-gray-300 dark:border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4"
+          className="border-t border-gray-300 dark:border-gray-800 pt-8 flex  justify-center items-center gap-4"
         >
           <p className="text-gray-600 dark:text-gray-400 text-sm">
             Copyright © {currentYear} Ramana Handmade Bouquets. All rights
             reserved.
-          </p>
-          <p className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-2">
-            Made with <Heart className="w-4 h-4 text-rose-500 fill-current" />{" "}
-            for bouquet lovers
           </p>
         </motion.div>
       </div>

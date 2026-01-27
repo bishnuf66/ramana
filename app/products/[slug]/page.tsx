@@ -18,6 +18,8 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
 import { useCart } from "../../../components/context/CartContext";
+import { useFavorites } from "../../../components/context/FavoritesContext";
+import { SocialLink } from "@/utils/social-link";
 import ProductCard from "../../../components/products/ProductCard";
 import ProductReviews from "../../../components/products/ProductReviews";
 import { Tables } from "@/types/database.types";
@@ -28,6 +30,7 @@ export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
   const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
@@ -150,6 +153,35 @@ export default function ProductPage() {
       quantity,
       price: product.discount_price || product.price,
     });
+  };
+
+  const handleToggleFavorite = () => {
+    if (!product) {
+      console.log("No product available");
+      return;
+    }
+    console.log(
+      "Toggling favorite for product:",
+      product.title,
+      "ID:",
+      product.id,
+    );
+    console.log("Current favorite status:", isFavorite(product.id));
+    toggleFavorite(product);
+  };
+
+  const handleWhatsAppOrder = () => {
+    const message = `Hello! I'd like to order:
+    
+*${product.title}*
+${product.description || ""}
+${product.discount_price ? `\n*Discount Price:* NPR ${product.discount_price.toLocaleString()}` : `\n*Price:* NPR ${product.price.toLocaleString()}`}
+
+Please let me know the availability and delivery details.
+Thank you! 🌸`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`${SocialLink.whatsapp}?text=${encodedMessage}`, "_blank");
   };
 
   return (
@@ -368,9 +400,30 @@ export default function ProductPage() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  onClick={handleWhatsAppOrder}
+                  className="flex-1 py-3 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg hover:shadow-green-500/50 transition-all flex items-center justify-center gap-2 font-semibold"
                 >
-                  <Heart className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <MessageCircle className="w-5 h-5" />
+                  Order via WhatsApp
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleToggleFavorite}
+                  className={`p-3 border rounded-lg transition-colors ${
+                    isFavorite(product.id)
+                      ? "border-rose-300 bg-rose-50 dark:border-rose-600 dark:bg-rose-900/30"
+                      : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <Heart
+                    className={`w-5 h-5 ${
+                      isFavorite(product.id)
+                        ? "text-rose-600 dark:text-rose-400 fill-current"
+                        : "text-gray-600 dark:text-gray-400"
+                    }`}
+                  />
                 </motion.button>
               </div>
             </div>
