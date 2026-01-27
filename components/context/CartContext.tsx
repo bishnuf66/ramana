@@ -155,9 +155,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    // Allow persistence even if not synced, as long as we have userId and cart data
-    if (!synced && cartReferences.length === 0) {
-      console.log("Skipping persistence - not synced and no cart data");
+    // Skip persistence if not synced yet (still loading from database)
+    if (!synced) {
+      console.log("Skipping persistence - not synced yet");
+      return;
+    }
+
+    // Only persist if there are items or if we're clearing an existing cart
+    if (cartReferences.length === 0 && synced) {
+      console.log("Skipping persistence - empty cart after sync");
       return;
     }
 
@@ -268,12 +274,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         let newReferences;
 
         if (existingRef) {
-          // Replace quantity (don't accumulate when adding from product card)
+          // Add selected quantity to existing quantity (accumulate)
           newReferences = prevReferences.map((ref) =>
             ref.product_id === product.id
               ? {
                   ...ref,
-                  quantity: product.quantity || 1,
+                  quantity: ref.quantity + (product.quantity || 1),
                 }
               : ref,
           );
