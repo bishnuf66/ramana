@@ -17,18 +17,28 @@ export default function CheckoutPage() {
   useEffect(() => {
     // Try to get selected items from sessionStorage
     const storedItems = sessionStorage.getItem("selectedCheckoutItems");
+    console.log("SessionStorage contents on checkout:", storedItems);
+
     if (storedItems) {
       try {
         const parsed = JSON.parse(storedItems);
+        console.log("Successfully parsed selected items:", parsed);
         setSelectedItems(parsed);
       } catch (error) {
         console.error("Error parsing selected items:", error);
+        console.log("Falling back to full cart");
         setSelectedItems(cart);
       }
     } else {
+      console.log("No selected items in sessionStorage");
+      console.log(
+        "Available sessionStorage keys:",
+        Object.keys(sessionStorage),
+      );
+      console.log("Cart items available:", cart);
       setSelectedItems(cart);
     }
-  }, [cart]);
+  }, []); // Remove cart dependency to prevent clearing sessionStorage
 
   // Calculate total from selected items
   const total = useMemo(() => {
@@ -51,6 +61,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (selectedItems.length === 0) {
+      console.log("No selected items found, redirecting to cart");
       router.push("/cart");
     }
   }, [selectedItems.length, router]);
