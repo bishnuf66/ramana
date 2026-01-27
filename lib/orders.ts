@@ -9,7 +9,7 @@ export interface OrderData {
   shipping_address: string;
   items: any[];
   total_amount: number;
-  payment_method: "esewa" | "khalti" | "partial_payment";
+  payment_method: string; // Updated to accept any string from payment_options table
   payment_type: "full" | "partial";
   partial_payment_percentage?: number; // Default 50%
   payment_screenshot?: File;

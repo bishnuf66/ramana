@@ -15,6 +15,9 @@ import {
   OrderData,
   CouponValidationResult,
 } from "@/lib/orders";
+import { Tables } from "@/types/database.types";
+
+type PaymentOption = Tables<"payment_options">;
 
 interface PaymentOrderFormProps {
   items: any[];
@@ -42,9 +45,8 @@ export default function PaymentOrderForm({
   const [deliveryLocation, setDeliveryLocation] = useState<
     "inside_kathmandu" | "outside_kathmandu"
   >("inside_kathmandu");
-  const [paymentMethod, setPaymentMethod] = useState<"esewa" | "khalti">(
-    "esewa",
-  );
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [paymentType, setPaymentType] = useState<"full" | "partial">("full");
   const [partialPaymentPercentage, setPartialPaymentPercentage] = useState(50);
 
@@ -80,6 +82,7 @@ export default function PaymentOrderForm({
 
   useEffect(() => {
     fetchUser();
+    fetchPaymentOptions();
     updateOrderTotals();
   }, [
     totalAmount,
@@ -88,6 +91,31 @@ export default function PaymentOrderForm({
     paymentType,
     partialPaymentPercentage,
   ]);
+
+  const fetchPaymentOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("payment_options")
+        .select("*")
+        .eq("status", "active");
+
+      if (error) throw error;
+
+      setPaymentOptions(data || []);
+
+      // Set default payment method to first available option
+      if (data && data.length > 0) {
+        setPaymentMethod(data[0].payment_number);
+        setFormData((prev) => ({
+          ...prev,
+          payment_method: data[0].payment_number,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching payment options:", error);
+      toast.error("Failed to load payment options");
+    }
+  };
 
   const fetchUser = async () => {
     const {
@@ -209,10 +237,8 @@ export default function PaymentOrderForm({
     setLoading(true);
 
     try {
-      const selectedPaymentMethod = paymentMethods.find(
-        (method) => method.id === paymentMethod,
-      );
-      if (selectedPaymentMethod?.requiresScreenshot && !paymentScreenshot) {
+      // All payment methods from database require screenshots
+      if (!paymentScreenshot) {
         toast.error("Please upload payment screenshot");
         setLoading(false);
         return;
@@ -235,29 +261,12 @@ export default function PaymentOrderForm({
     }
   };
 
-  const paymentMethods = [
-    {
-      id: "esewa",
-      name: "eSewa",
-      description: "Pay via eSewa",
-      requiresScreenshot: true,
-    },
-    {
-      id: "khalti",
-      name: "Khalti",
-      description: "Pay via Khalti",
-      requiresScreenshot: true,
-    },
-  ];
-
-  const getQRCodeUrl = (method: string) => {
-    // Replace with your actual QR code URLs
-    if (method === "esewa") {
-      return "/api/qrcode/esewa"; // Your eSewa QR code endpoint
-    } else if (method === "khalti") {
-      return "/api/qrcode/khalti"; // Your Khalti QR code endpoint
-    }
-    return "";
+  const getQRCodeUrl = (paymentType: string) => {
+    // Return QR code URL from payment_options table
+    const payment = paymentOptions.find(
+      (p) => p.payment_number === paymentType,
+    );
+    return payment?.qr_image_url || "";
   };
 
   const formContent = (
@@ -500,11 +509,11 @@ export default function PaymentOrderForm({
             Payment Method *
           </label>
           <div className="grid grid-cols-1 gap-3">
-            {paymentMethods.map((method) => (
+            {paymentOptions.map((option) => (
               <label
-                key={method.id}
+                key={option.id}
                 className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                  paymentMethod === method.id
+                  paymentMethod === option.payment_number
                     ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
@@ -512,23 +521,27 @@ export default function PaymentOrderForm({
                 <input
                   type="radio"
                   name="payment_method"
-                  value={method.id}
-                  checked={paymentMethod === method.id}
+                  value={option.payment_number}
+                  checked={paymentMethod === option.payment_number}
                   onChange={(e) => {
-                    setPaymentMethod(e.target.value as "esewa" | "khalti");
+                    setPaymentMethod(e.target.value);
                     setFormData((prev) => ({
                       ...prev,
-                      payment_method: e.target.value as "esewa" | "khalti",
+                      payment_method: e.target.value,
                     }));
                   }}
                   className="mr-3"
                 />
                 <div className="flex-1">
                   <div className="font-medium text-gray-900 dark:text-white">
-                    {method.name}
+                    {option.payment_type.charAt(0).toUpperCase() +
+                      option.payment_type.slice(1)}
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {method.description}
+                    Pay via{" "}
+                    {option.payment_type.charAt(0).toUpperCase() +
+                      option.payment_type.slice(1)}{" "}
+                    to {option.payment_number}
                   </div>
                 </div>
               </label>
@@ -642,29 +655,36 @@ export default function PaymentOrderForm({
         )}
 
         {/* QR Code Display */}
-        {(paymentMethod === "esewa" || paymentMethod === "khalti") && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <QrCode className="w-5 h-5 text-blue-600" />
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200">
-                Scan QR Code to Pay
-              </h4>
-            </div>
-            <div className="flex justify-center">
-              <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center border-2 border-gray-300">
-                <p className="text-gray-500 text-center text-sm">
-                  QR Code for {paymentMethod === "esewa" ? "eSewa" : "Khalti"}
-                </p>
-                {/* Replace with actual QR code image */}
-                {/* <img src={getQRCodeUrl(paymentMethod)} alt={`${paymentMethod} QR Code`} className="w-full h-full object-cover rounded" /> */}
+        {(() => {
+          const selectedPayment = paymentOptions.find(
+            (option) => option.payment_number === paymentMethod,
+          );
+          return selectedPayment?.qr_image_url ? (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <QrCode className="w-5 h-5 text-blue-600" />
+                <h4 className="font-semibold text-blue-800 dark:text-blue-200">
+                  Scan QR Code to Pay
+                </h4>
               </div>
+              <div className="flex justify-center">
+                <div className="w-48 h-48 bg-white rounded-lg flex items-center justify-center border-2 border-gray-300">
+                  <img
+                    src={selectedPayment.qr_image_url || ""}
+                    alt={`${selectedPayment.payment_type} QR Code`}
+                    className="w-full h-full object-cover rounded"
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-blue-600 dark:text-blue-400 text-center mt-3">
+                Scan with your{" "}
+                {selectedPayment.payment_type.charAt(0).toUpperCase() +
+                  selectedPayment.payment_type.slice(1)}{" "}
+                app and upload screenshot below
+              </p>
             </div>
-            <p className="text-sm text-blue-600 dark:text-blue-400 text-center mt-3">
-              Scan with your {paymentMethod === "esewa" ? "eSewa" : "Khalti"}{" "}
-              app and upload screenshot below
-            </p>
-          </div>
-        )}
+          ) : null;
+        })()}
 
         {/* Coupon Code */}
         <div>
@@ -711,8 +731,9 @@ export default function PaymentOrderForm({
         </div>
 
         {/* Payment Screenshot Upload */}
-        {paymentMethods.find((method) => method.id === paymentMethod)
-          ?.requiresScreenshot && (
+        {paymentOptions.find(
+          (option) => option.payment_number === paymentMethod,
+        ) && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Payment Screenshot *
