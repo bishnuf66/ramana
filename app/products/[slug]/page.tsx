@@ -149,10 +149,15 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     addToCart({
-      ...product,
-      quantity,
+      id: product.id,
+      title: product.title,
       price: product.discount_price || product.price,
+      cover_image: product.cover_image || "/placeholder.jpg",
+      quantity: quantity,
     });
+
+    // Reset quantity to 1 after successful addition
+    setQuantity(1);
   };
 
   const handleToggleFavorite = () => {
