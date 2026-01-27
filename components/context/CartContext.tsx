@@ -130,6 +130,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     setCart(enrichedCart);
   }, [userId, cartReferences, enrichCartWithProductData]);
 
+  // Auto-enrich cart when cartReferences changes (for immediate UI updates)
+  useEffect(() => {
+    if (!userId || !synced || cartReferences.length === 0) return;
+
+    const enrichCart = async () => {
+      console.log("Auto-enriching cart due to cartReferences change");
+      const enrichedCart = await enrichCartWithProductData(cartReferences);
+      setCart(enrichedCart);
+    };
+
+    enrichCart();
+  }, [cartReferences, userId, synced, enrichCartWithProductData]);
+
   // Persist to Supabase when logged in (store only references)
   useEffect(() => {
     console.log("Persistence useEffect triggered:");
@@ -255,12 +268,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         let newReferences;
 
         if (existingRef) {
-          // Add selected quantity to existing quantity (accumulate)
+          // Replace quantity (don't accumulate when adding from product card)
           newReferences = prevReferences.map((ref) =>
             ref.product_id === product.id
               ? {
                   ...ref,
-                  quantity: ref.quantity + (product.quantity || 1), // Accumulate quantity
+                  quantity: product.quantity || 1,
                 }
               : ref,
           );
@@ -275,7 +288,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         console.log("New cart references:", newReferences);
-
         return newReferences;
       });
 
@@ -319,6 +331,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return newReferences;
     });
+
     toast.success("Removed from cart");
   }, []);
 
@@ -339,6 +352,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
           return newReferences;
         });
+
         toast.success("Item removed from cart");
       } else {
         // Update quantity
