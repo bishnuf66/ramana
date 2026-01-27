@@ -327,9 +327,7 @@ export default function UserDashboard() {
 
     return (
       hoursSinceOrder <= 24 &&
-      order.status !== "cancelled" &&
-      order.status !== "shipped" &&
-      order.status !== "delivered" &&
+      order.status === "pending" &&
       !order.cancellation_request
     );
   };
