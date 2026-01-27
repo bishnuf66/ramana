@@ -418,7 +418,7 @@ export default function UserDashboard() {
                             </div>
                             <div className="text-right">
                               <p className="font-medium text-gray-900 dark:text-white">
-                                ${order.total_amount.toFixed(2)}
+                                Rs {order.total_amount.toFixed(2)}
                               </p>
                               <span
                                 className={`text-xs px-2 py-1 rounded-full ${
@@ -489,7 +489,7 @@ export default function UserDashboard() {
                           </div>
                           <div className="text-right">
                             <p className="font-medium text-gray-900 dark:text-white">
-                              ${order.total_amount.toFixed(2)}
+                              Rs {order.total_amount.toFixed(2)}
                             </p>
                             <span
                               className={`text-xs px-2 py-1 rounded-full ${

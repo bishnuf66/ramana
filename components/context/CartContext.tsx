@@ -43,32 +43,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [isClient, setIsClient] = useState(false);
-
-  // Set isClient to true after mount
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Load cart from localStorage only on client
-  useEffect(() => {
-    if (isClient) {
-      const storedCart = localStorage.getItem("cart");
-      if (storedCart) {
-        try {
-          const parsedCart = JSON.parse(storedCart);
-          // Ensure all items have quantity
-          const cartWithQuantity = parsedCart.map((item: any) => ({
-            ...item,
-            quantity: item.quantity || 1,
-          }));
-          setCart(cartWithQuantity);
-        } catch (error) {
-          console.error("Error parsing cart from localStorage:", error);
-        }
-      }
-    }
-  }, [isClient]);
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,16 +56,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       setUserId(session?.user?.id ?? null);
       setSynced(false); // re-sync on login/logout
     });
-    return () => {
-      sub.subscription.unsubscribe();
-    };
+    return () => sub.subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (!isClient) return;
-    if (userId) return;
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart, userId, isClient]);
 
   // Persist to Supabase when logged in
   useEffect(() => {
@@ -116,80 +82,45 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [cart, userId, synced]);
 
-  // Initial sync between local and remote on login
+  // Load cart from Supabase when logged in
   useEffect(() => {
-    if (!isClient) return;
-
     if (!userId) {
-      const localCart: CartItem[] = JSON.parse(
-        localStorage.getItem("cart") || "[]",
-      ).map((item: any) => ({
-        ...item,
-        quantity: item.quantity || 1,
-      }));
-      setCart(localCart);
+      setCart([]);
       setSynced(true);
       return;
     }
 
-    const sync = async () => {
-      const localCart: CartItem[] = JSON.parse(
-        localStorage.getItem("cart") || "[]",
-      ).map((item: any) => ({
-        ...item,
-        quantity: item.quantity || 1,
-      }));
+    const loadCart = async () => {
+      try {
+        const { data: remoteRow, error } = await supabase
+          .from("user_cart")
+          .select("items")
+          .eq("user_id", userId)
+          .single();
 
-      const { data: remoteRow, error } = await supabase
-        .from("user_cart")
-        .select("items")
-        .eq("user_id", userId)
-        .single();
+        if (error && error.code !== "PGRST116") {
+          console.error("Cart load error:", error);
+          setSynced(true);
+          return;
+        }
 
-      if (error && error.code !== "PGRST116") {
-        console.error("cart sync error", error);
-        setSynced(true);
-        return;
-      }
-
-      const remoteCart: CartItem[] = (remoteRow?.items || []).map(
-        (item: any) => ({
-          ...item,
-          quantity: item.quantity || 1,
-        }),
-      );
-
-      const map = new Map<string | number, CartItem>();
-      [...remoteCart, ...localCart].forEach((item) => {
-        const existing = map.get(item.id);
-        if (existing) {
-          map.set(item.id, {
-            ...existing,
-            quantity: existing.quantity + item.quantity,
-          });
-        } else {
-          map.set(item.id, {
+        const remoteCart: CartItem[] = (remoteRow?.items || []).map(
+          (item: any) => ({
             ...item,
             quantity: item.quantity || 1,
-          });
-        }
-      });
-      const resolved = Array.from(map.values());
+          }),
+        );
 
-      setCart(resolved);
-      setSynced(true);
-
-      await supabase.from("user_cart").upsert({
-        user_id: userId,
-        items: resolved,
-        updated_at: new Date().toISOString(),
-      });
-
-      localStorage.removeItem("cart");
+        setCart(remoteCart);
+        setSynced(true);
+      } catch (error) {
+        console.error("Error loading cart:", error);
+        setSynced(true);
+      }
     };
 
-    sync();
-  }, [userId, isClient]);
+    loadCart();
+  }, [userId]);
 
   const addToCart = useCallback(
     (
@@ -198,6 +129,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         quantity?: number;
       },
     ) => {
+      if (!userId) {
+        toast.error("Please login to add items to cart");
+        return;
+      }
+
       setCart((prevCart) => {
         const existingItem = prevCart.find((item) => item.id === product.id);
         if (existingItem) {
@@ -217,40 +153,71 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       });
       toast.success(`${product.title} added to cart`);
     },
-    [],
+    [userId],
   );
 
-  const increaseQuantity = useCallback((id: number | string) => {
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.id === id ? { ...item, quantity: (item.quantity || 0) + 1 } : item,
-      ),
-    );
-    toast.success("Quantity increased");
-  }, []);
+  const increaseQuantity = useCallback(
+    (id: number | string) => {
+      if (!userId) {
+        toast.error("Please login to modify cart");
+        return;
+      }
 
-  const decreaseQuantity = useCallback((id: number | string) => {
-    setCart((prevCart) =>
-      prevCart
-        .map((item) =>
+      setCart((prevCart) =>
+        prevCart.map((item) =>
           item.id === id
-            ? { ...item, quantity: (item.quantity || 0) - 1 }
+            ? { ...item, quantity: (item.quantity || 0) + 1 }
             : item,
-        )
-        .filter((item) => (item.quantity || 0) > 0),
-    );
-    toast.success("Quantity decreased");
-  }, []);
+        ),
+      );
+      toast.success("Quantity increased");
+    },
+    [userId],
+  );
 
-  const removeFromCart = useCallback((id: number | string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== id));
-    toast.error("Item removed from cart");
-  }, []);
+  const decreaseQuantity = useCallback(
+    (id: number | string) => {
+      if (!userId) {
+        toast.error("Please login to modify cart");
+        return;
+      }
+
+      setCart((prevCart) =>
+        prevCart
+          .map((item) =>
+            item.id === id
+              ? { ...item, quantity: (item.quantity || 0) - 1 }
+              : item,
+          )
+          .filter((item) => (item.quantity || 0) > 0),
+      );
+      toast.success("Quantity decreased");
+    },
+    [userId],
+  );
+
+  const removeFromCart = useCallback(
+    (id: number | string) => {
+      if (!userId) {
+        toast.error("Please login to modify cart");
+        return;
+      }
+
+      setCart((prevCart) => prevCart.filter((item) => item.id !== id));
+      toast.error("Item removed from cart");
+    },
+    [userId],
+  );
 
   const clearCart = useCallback(() => {
+    if (!userId) {
+      toast.error("Please login to modify cart");
+      return;
+    }
+
     setCart([]);
     toast.error("Cart cleared");
-  }, []);
+  }, [userId]);
 
   const getTotalPrice = useCallback(() => {
     return cart.reduce(

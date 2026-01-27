@@ -3,6 +3,7 @@ import { CartProvider } from "@/components/context/CartContext";
 import { CheckoutProvider } from "@/components/context/CheckoutContext";
 import { ThemeProvider } from "@/components/context/ThemeContext";
 import { FavoritesProvider } from "@/components/context/FavoritesContext";
+import { AuthModalProvider } from "@/components/context/AuthModalContext";
 import PremiumHeader from "@/components/non-authenticated/PremiumHeader";
 import PremiumFooter from "@/components/global/PremiumFooter";
 import FloatingContact from "@/components/global/FloatingContact";
@@ -112,21 +113,23 @@ export default function RootLayout({
       </head>
       <body className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
         <ThemeProvider>
-          <CartProvider>
-            <CheckoutProvider>
-              <FavoritesProvider>
-                <FaviconSwitcher />
-                <PremiumHeader />
-                <main className="pt-20">{children}</main>
-                <PremiumFooter />
-                <FloatingContact />
-                <ToastContainer
-                  theme="colored"
-                  toastClassName="dark:bg-gray-800 dark:text-white"
-                />
-              </FavoritesProvider>
-            </CheckoutProvider>
-          </CartProvider>
+          <AuthModalProvider>
+            <CartProvider>
+              <CheckoutProvider>
+                <FavoritesProvider>
+                  <FaviconSwitcher />
+                  <PremiumHeader />
+                  <main className="pt-20">{children}</main>
+                  <PremiumFooter />
+                  <FloatingContact />
+                  <ToastContainer
+                    theme="colored"
+                    toastClassName="dark:bg-gray-800 dark:text-white"
+                  />
+                </FavoritesProvider>
+              </CheckoutProvider>
+            </CartProvider>
+          </AuthModalProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, Search } from "lucide-react";
+import { toast } from "react-toastify";
+import { supabase } from "@/lib/supabase/client";
 import { useFavorites } from "@/components/context/FavoritesContext";
+import { useAuthModal } from "@/components/context/AuthModalContext";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/products/ProductCard";
 import { Tables } from "@/types/database.types";
@@ -11,10 +15,31 @@ import { Tables } from "@/types/database.types";
 type Product = Tables<"products">;
 
 export default function FavoritesPage() {
+  const router = useRouter();
+  const { openLoginModal } = useAuthModal();
   const { favorites, removeFromFavorites, clearFavorites } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "price" | "addedDate">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUserId(user?.id ?? null);
+      } catch (error) {
+        console.error("Authentication error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Filter favorites based on search query
   const filteredFavorites = favorites.filter((favorite) =>
@@ -38,6 +63,46 @@ export default function FavoritesPage() {
 
   // Since we're now storing full Product objects, we don't need transformation
   const transformedFavorites = sortedFavorites;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading favorites...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Login Required
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Please login to access your favorites
+          </p>
+          <button
+            onClick={openLoginModal}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mr-4"
+          >
+            Login
+          </button>
+          <button
+            onClick={() => router.push("/products")}
+            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Browse Products
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">

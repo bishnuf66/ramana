@@ -51,16 +51,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
-  const [isClient, setIsClient] = useState(false);
   const [lastAction, setLastAction] = useState<{
     type: "add" | "remove" | "clear" | null;
     productName?: string;
   }>({ type: null });
-
-  // Set isClient to true after mount
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Handle toast notifications based on last action
   useEffect(() => {
@@ -87,21 +81,6 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [lastAction]);
 
-  // Load favorites from localStorage only on client
-  useEffect(() => {
-    if (isClient && !userId) {
-      const storedFavorites = localStorage.getItem("favorites");
-      if (storedFavorites) {
-        try {
-          const parsedFavorites = JSON.parse(storedFavorites);
-          setFavorites(parsedFavorites);
-        } catch (error) {
-          console.error("Error parsing favorites from localStorage:", error);
-        }
-      }
-      setSynced(true);
-    }
-  }, [isClient, userId]);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -114,12 +93,6 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (!isClient) return;
-    if (userId) return;
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-  }, [favorites, userId, isClient]);
 
   useEffect(() => {
     if (!userId || !synced) return;
@@ -143,109 +116,123 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     };
   }, [favorites, userId, synced]);
 
+  // Load favorites from Supabase when logged in
   useEffect(() => {
-    if (!isClient) return;
-
     if (!userId) {
-      const localFavs: Product[] =
-        JSON.parse(localStorage.getItem("favorites") || "[]") || [];
-      setFavorites(localFavs);
+      setFavorites([]);
       setSynced(true);
       return;
     }
 
-    const sync = async () => {
-      const localFavs: Product[] =
-        JSON.parse(localStorage.getItem("favorites") || "[]") || [];
+    const loadFavorites = async () => {
+      try {
+        const { data: remoteRow, error } = await supabase
+          .from("user_favorites")
+          .select("items")
+          .eq("user_id", userId)
+          .single();
 
-      const { data: remoteRow, error } = await supabase
-        .from("user_favorites")
-        .select("items")
-        .eq("user_id", userId)
-        .single();
+        if (error && error.code !== "PGRST116") {
+          console.error("Favorites load error:", error);
+          setSynced(true);
+          return;
+        }
 
-      if (error && error.code !== "PGRST116") {
-        console.error("favorites sync error", error);
+        const remoteFavs: Product[] = remoteRow?.items || [];
+        setFavorites(remoteFavs);
         setSynced(true);
+      } catch (error) {
+        console.error("Error loading favorites:", error);
+        setSynced(true);
+      }
+    };
+
+    loadFavorites();
+  }, [userId]);
+
+  const addToFavorites = useCallback(
+    (product: Product) => {
+      if (!userId) {
+        toast.error("Please login to add items to favorites");
         return;
       }
 
-      const remoteFavs: Product[] = remoteRow?.items || [];
-      const map = new Map<string, Product>();
-      [...remoteFavs, ...localFavs].forEach((fav) => {
-        map.set(fav.id, fav);
-      });
-      const resolved = Array.from(map.values());
-
-      setFavorites(resolved);
-      setSynced(true);
-
-      await supabase.from("user_favorites").upsert({
-        user_id: userId,
-        items: resolved,
-        updated_at: new Date().toISOString(),
-      });
-
-      localStorage.removeItem("favorites");
-    };
-
-    sync();
-  }, [userId, isClient]);
-
-  const addToFavorites = useCallback((product: Product) => {
-    setFavorites((prevFavorites) => {
-      const existingFavorite = prevFavorites.find(
-        (fav) => fav.id === product.id,
-      );
-      if (existingFavorite) {
-        return prevFavorites;
-      }
-      const withAddedAt: Product = {
-        ...product,
-      };
-      setLastAction({ type: "add", productName: product.title });
-      return [...prevFavorites, withAddedAt];
-    });
-  }, []);
-
-  const removeFromFavorites = useCallback((id: string) => {
-    setFavorites((prevFavorites) => {
-      const product = prevFavorites.find((fav) => fav.id === id);
-      if (!product) {
-        return prevFavorites;
-      }
-      setLastAction({ type: "remove" });
-      return prevFavorites.filter((fav) => fav.id !== id);
-    });
-  }, []);
-
-  const toggleFavorite = useCallback((product: Product) => {
-    setFavorites((prevFavorites) => {
-      const existingFavorite = prevFavorites.find(
-        (fav) => fav.id === product.id,
-      );
-      if (existingFavorite) {
-        // Remove from favorites
-        setLastAction({ type: "remove" });
-        return prevFavorites.filter((fav) => fav.id !== product.id);
-      } else {
-        // Add to favorites - check if already exists to prevent duplicate
-        if (prevFavorites.some((fav) => fav.id === product.id)) {
-          return prevFavorites; // Already exists, don't add again
+      setFavorites((prevFavorites) => {
+        const existingFavorite = prevFavorites.find(
+          (fav) => fav.id === product.id,
+        );
+        if (existingFavorite) {
+          return prevFavorites;
         }
         const withAddedAt: Product = {
           ...product,
         };
         setLastAction({ type: "add", productName: product.title });
         return [...prevFavorites, withAddedAt];
+      });
+    },
+    [userId],
+  );
+
+  const removeFromFavorites = useCallback(
+    (id: string) => {
+      if (!userId) {
+        toast.error("Please login to modify favorites");
+        return;
       }
-    });
-  }, []);
+
+      setFavorites((prevFavorites) => {
+        const product = prevFavorites.find((fav) => fav.id === id);
+        if (!product) {
+          return prevFavorites;
+        }
+        setLastAction({ type: "remove" });
+        return prevFavorites.filter((fav) => fav.id !== id);
+      });
+    },
+    [userId],
+  );
+
+  const toggleFavorite = useCallback(
+    (product: Product) => {
+      if (!userId) {
+        toast.error("Please login to add items to favorites");
+        return;
+      }
+
+      setFavorites((prevFavorites) => {
+        const existingFavorite = prevFavorites.find(
+          (fav) => fav.id === product.id,
+        );
+        if (existingFavorite) {
+          // Remove from favorites
+          setLastAction({ type: "remove" });
+          return prevFavorites.filter((fav) => fav.id !== product.id);
+        } else {
+          // Add to favorites - check if already exists to prevent duplicate
+          if (prevFavorites.some((fav) => fav.id === product.id)) {
+            return prevFavorites; // Already exists, don't add again
+          }
+          const withAddedAt: Product = {
+            ...product,
+          };
+          setLastAction({ type: "add", productName: product.title });
+          return [...prevFavorites, withAddedAt];
+        }
+      });
+    },
+    [userId],
+  );
 
   const clearFavorites = useCallback(() => {
+    if (!userId) {
+      toast.error("Please login to modify favorites");
+      return;
+    }
+
     setFavorites([]);
     setLastAction({ type: "clear" });
-  }, []);
+  }, [userId]);
 
   const isFavorite = useCallback(
     (id: number | string) => {

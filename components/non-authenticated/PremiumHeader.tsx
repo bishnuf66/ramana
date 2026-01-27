@@ -2,25 +2,18 @@
 
 import { useState, useEffect, useLayoutEffect } from "react";
 import Link from "next/link";
-import {
-  Heart,
-  Search,
-  ShoppingCart,
-  Menu,
-  X,
-  User,
-  ChevronDown,
-} from "lucide-react";
-import LoginModal from "./LoginModal";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { Heart, ShoppingCart, User, ChevronDown, X, Menu } from "lucide-react";
+import Image from "next/image";
+import { useCart } from "../context/CartContext";
+import { useFavorites } from "../context/FavoritesContext";
+import { useAuthModal } from "../context/AuthModalContext";
+import { signOut } from "@/lib/supabase/auth";
+import { supabase } from "@/lib/supabase/client";
 import Logo from "../global/Logo";
 import ThemeToggle from "../global/ThemeToggle";
-import { useCart } from "../context/CartContext";
-import { useFavorites } from "@/components/context/FavoritesContext";
-import { supabase } from "@/lib/supabase/client";
-import { signOut } from "@/lib/supabase/auth";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+import LoginModal from "./LoginModal";
 import ProductSearch from "../search/ProductSearch";
 
 export default function PremiumHeader() {
@@ -32,9 +25,9 @@ export default function PremiumHeader() {
     isFavorite,
     clearFavorites,
   } = useFavorites();
+  const { isLoginModalOpen, openLoginModal, closeLoginModal } = useAuthModal();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isClient, setIsClient] = useState(false);
@@ -103,13 +96,6 @@ export default function PremiumHeader() {
       // Clear cart and favorites using context methods
       clearCart();
       clearFavorites();
-      // Also clear localStorage as backup and prevent sync from restoring
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("cart");
-        localStorage.removeItem("favorites");
-        // Force clear favorites in localStorage immediately
-        localStorage.setItem("favorites", JSON.stringify([]));
-      }
       router.push("/");
       setIsProfileDropdownOpen(false);
     } catch (error) {
@@ -324,7 +310,7 @@ export default function PremiumHeader() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsLoginModalOpen(true)}
+                  onClick={openLoginModal}
                   className="hidden md:flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
                 >
                   <User className="w-4 h-4" />
@@ -438,7 +424,7 @@ export default function PremiumHeader() {
                 ) : (
                   <button
                     onClick={() => {
-                      setIsLoginModalOpen(true);
+                      openLoginModal();
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full font-semibold"
@@ -453,10 +439,7 @@ export default function PremiumHeader() {
         </AnimatePresence>
       </motion.header>
 
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
+      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
     </>
   );
 }

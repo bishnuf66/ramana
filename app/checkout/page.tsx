@@ -6,15 +6,18 @@ import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
 import { useCart } from "@/components/context/CartContext";
 import { useCheckout } from "@/components/context/CheckoutContext";
+import { useAuthModal } from "@/components/context/AuthModalContext";
 import PaymentOrderForm from "@/components/orders/PaymentOrderForm";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { openLoginModal } = useAuthModal();
   const { cart, getTotalPrice, removeFromCart } = useCart();
   const { selectedItems, getCheckoutTotal, clearSelectedItems } = useCheckout();
 
   const [showPaymentForm, setShowPaymentForm] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Calculate total from selected items
   const total = useMemo(() => {
@@ -43,9 +46,12 @@ export default function CheckoutPage() {
     const load = async () => {
       try {
         setLoadingProfile(true);
-        await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUserId(user?.id ?? null);
       } catch (e) {
-        // no-op
+        console.error("Authentication error:", e);
       } finally {
         setLoadingProfile(false);
       }
@@ -76,7 +82,39 @@ export default function CheckoutPage() {
   if (loadingProfile) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading checkout...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Login Required
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Please login to access the checkout page
+          </p>
+          <button
+            onClick={() => router.push("/cart")}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mr-4"
+          >
+            Back to Cart
+          </button>
+          <button
+            onClick={openLoginModal}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Login
+          </button>
+        </div>
       </div>
     );
   }

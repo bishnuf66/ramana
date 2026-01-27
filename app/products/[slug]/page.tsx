@@ -156,17 +156,7 @@ export default function ProductPage() {
   };
 
   const handleToggleFavorite = () => {
-    if (!product) {
-      console.log("No product available");
-      return;
-    }
-    console.log(
-      "Toggling favorite for product:",
-      product.title,
-      "ID:",
-      product.id,
-    );
-    console.log("Current favorite status:", isFavorite(product.id));
+    if (!product) return;
     toggleFavorite(product);
   };
 
