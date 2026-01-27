@@ -230,11 +230,16 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      console.log("=== ADD TO FAVORITES START ===");
+      console.log("Product:", product.title, "ID:", product.id);
+      console.log("Current favoriteReferences before:", favoriteReferences);
+
       setFavoriteReferences((prevReferences) => {
         const existingRef = prevReferences.find(
           (ref) => ref.product_id === product.id,
         );
         if (existingRef) {
+          console.log("Product already in favorites, skipping");
           return prevReferences; // Already in favorites
         }
 
@@ -244,8 +249,18 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
           added_at: new Date().toISOString(),
         };
 
+        const newReferences = [...prevReferences, newRef];
+        console.log("New favoriteReferences after add:", newReferences);
+
+        // IMMEDIATE UI UPDATE: Add to enriched favorites
+        const newFavoriteItem: FavoriteItem = {
+          ...product,
+          added_at: newRef.added_at,
+        };
+        setFavorites((prevFavorites) => [...prevFavorites, newFavoriteItem]);
+
         toast.success(`${product.title} added to favorites`);
-        return [...prevReferences, newRef];
+        return newReferences;
       });
     },
     [userId],
@@ -257,10 +272,19 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setFavoriteReferences((prevReferences) =>
-      prevReferences.filter((ref) => ref.product_id !== String(id)),
-    );
-    toast.success("Product removed from favorites");
+    setFavoriteReferences((prevReferences) => {
+      const newReferences = prevReferences.filter(
+        (ref) => ref.product_id !== String(id),
+      );
+
+      // IMMEDIATE UI UPDATE: Remove from enriched favorites
+      setFavorites((prevFavorites) =>
+        prevFavorites.filter((fav) => fav.id !== String(id)),
+      );
+
+      toast.success("Product removed from favorites");
+      return newReferences;
+    });
   }, []);
 
   const toggleFavorite = useCallback(
@@ -270,26 +294,55 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setFavoriteReferences((prevReferences) => {
-        const existingRef = prevReferences.find(
-          (ref) => ref.product_id === product.id,
+      console.log("=== TOGGLE FAVORITE START ===");
+      console.log("Product:", product.title, "ID:", product.id);
+      console.log("Current favoriteReferences before:", favoriteReferences);
+
+      // Check if product is already in favorites BEFORE calling setFavoriteReferences
+      const existingRef = favoriteReferences.find(
+        (ref) => ref.product_id === product.id,
+      );
+      console.log("Existing reference:", existingRef);
+
+      if (existingRef) {
+        // Remove from favorites
+        console.log("Removing from favorites...");
+        const newReferences = favoriteReferences.filter(
+          (ref) => ref.product_id !== product.id,
         );
-        if (existingRef) {
-          // Remove from favorites
-          toast.success("Product removed from favorites");
-          return prevReferences.filter((ref) => ref.product_id !== product.id);
-        } else {
-          // Add to favorites
-          const newRef: FavoriteItemReference = {
-            product_id: String(product.id),
-            added_at: new Date().toISOString(),
-          };
-          toast.success(`${product.title} added to favorites`);
-          return [...prevReferences, newRef];
-        }
-      });
+        console.log("New favoriteReferences after remove:", newReferences);
+
+        // Update both states
+        setFavoriteReferences(newReferences);
+        setFavorites((prevFavorites) =>
+          prevFavorites.filter((fav) => fav.id !== String(product.id)),
+        );
+
+        toast.success("Product removed from favorites");
+      } else {
+        // Add to favorites
+        console.log("Adding to favorites...");
+        const newRef: FavoriteItemReference = {
+          product_id: String(product.id),
+          added_at: new Date().toISOString(),
+        };
+        const newReferences = [...favoriteReferences, newRef];
+        console.log("New favoriteReferences after add:", newReferences);
+
+        // Update both states
+        setFavoriteReferences(newReferences);
+        setFavorites((prevFavorites) => [
+          ...prevFavorites,
+          {
+            ...product,
+            added_at: newRef.added_at,
+          },
+        ]);
+
+        toast.success(`${product.title} added to favorites`);
+      }
     },
-    [userId],
+    [userId, favoriteReferences],
   );
 
   const clearFavorites = useCallback(() => {
