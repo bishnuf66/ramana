@@ -20,24 +20,16 @@ export default function PremiumHeader() {
   const { getTotalItems, clearCart } = useCart();
   const {
     favorites,
-    addToFavorites,
-    removeFromFavorites,
-    isFavorite,
+
     clearFavorites,
   } = useFavorites();
   const { isLoginModalOpen, openLoginModal, closeLoginModal } = useAuthModal();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isClient, setIsClient] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-
-  useLayoutEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {

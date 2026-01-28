@@ -53,14 +53,18 @@ const ExploreProducts: React.FC = () => {
     return (
       <div className="p-8">
         <div className="flex flex-row justify-between mb-4">
-          <div className="font-bold text-2xl">Featured Products</div>
-          <div className="primary-red underline">View more</div>
+          <div className="font-bold text-2xl text-gray-900 dark:text-white">
+            Featured Products
+          </div>
+          <div className="primary-red underline text-gray-900 dark:text-white">
+            View more
+          </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="bg-gray-200 h-48 rounded"></div>
-              <div className="bg-gray-200 h-4 rounded mt-2"></div>
+              <div className="bg-gray-200 dark:bg-gray-700 h-48 rounded"></div>
+              <div className="bg-gray-200 dark:bg-gray-700 h-4 rounded mt-2"></div>
             </div>
           ))}
         </div>
@@ -72,7 +76,9 @@ const ExploreProducts: React.FC = () => {
     <div>
       {/* Header with View More button */}
       <div className="flex flex-row justify-between items-center mb-6">
-        <div className="font-bold text-2xl">Featured Products</div>
+        <div className="font-bold text-2xl text-gray-900 dark:text-white">
+          Featured Products
+        </div>
         <a
           href="/products"
           className="text-green-600 hover:text-green-700 underline font-medium transition-colors"
@@ -87,11 +93,11 @@ const ExploreProducts: React.FC = () => {
             <ProductCard key={product.id} product={product} viewMode="grid" />
           ))
         ) : (
-          <div className="col-span-full text-center text-gray-500 py-12">
-            <p className="text-lg">
+          <div className="col-span-full text-center text-gray-500 dark:text-gray-400 py-12">
+            <p className="text-lg text-gray-900 dark:text-white">
               No featured products available at the moment.
             </p>
-            <p className="text-sm mt-2">
+            <p className="text-sm mt-2 text-gray-600 dark:text-gray-400">
               Check back soon for our latest arrangements!
             </p>
           </div>
@@ -135,7 +141,7 @@ const ExploreProducts: React.FC = () => {
 
       {/* End of Products Message */}
       {!hasNextPage && products.length > 0 && (
-        <div className="text-center mt-8 text-gray-500">
+        <div className="text-center mt-8 text-gray-500 dark:text-gray-400">
           <p className="text-sm">
             You've reached the end of our featured products.
           </p>

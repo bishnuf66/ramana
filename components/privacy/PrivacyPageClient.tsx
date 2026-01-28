@@ -6,7 +6,7 @@ import { Shield, Lock, Eye, Database } from "lucide-react";
 
 export default function PrivacyPageClient() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-green-50 dark:from-gray-900 dark:to-green-900/20">
       {/* Header */}
       <section className="bg-gradient-to-r from-green-600 to-green-700 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,17 +41,17 @@ export default function PrivacyPageClient() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Database className="w-8 h-8 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Information We Collect
                 </h2>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                     Personal Information
                   </h3>
-                  <ul className="space-y-2 text-gray-600">
+                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                     <li>• Name and contact details when you place orders</li>
                     <li>
                       • Email address for account creation and communication
@@ -66,10 +66,10 @@ export default function PrivacyPageClient() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                     Technical Information
                   </h3>
-                  <ul className="space-y-2 text-gray-600">
+                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                     <li>• IP address and device information</li>
                     <li>• Browser type and operating system</li>
                     <li>• Pages visited and time spent on our site</li>
@@ -88,18 +88,18 @@ export default function PrivacyPageClient() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Eye className="w-8 h-8 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   How We Use Your Information
                 </h2>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                    <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                       Service Delivery
                     </h3>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                       <li>• Process and fulfill your orders</li>
                       <li>• Send order confirmations and updates</li>
                       <li>• Coordinate delivery arrangements</li>
@@ -108,10 +108,10 @@ export default function PrivacyPageClient() {
                   </div>
 
                   <div>
-                    <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                    <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                       Communication & Marketing
                     </h3>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                       <li>• Send promotional emails (with consent)</li>
                       <li>• Personalize your shopping experience</li>
                       <li>• Improve our website and services</li>
@@ -131,17 +131,17 @@ export default function PrivacyPageClient() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Lock className="w-8 h-8 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Data Protection & Security
                 </h2>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                     Security Measures
                   </h3>
-                  <ul className="space-y-2 text-gray-600">
+                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                     <li>• SSL encryption for all data transmissions</li>
                     <li>
                       • Secure payment processing through trusted providers
@@ -153,10 +153,10 @@ export default function PrivacyPageClient() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                     Data Retention
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     We retain your personal information only as long as
                     necessary to provide our services and comply with legal
                     obligations. You can request deletion of your account and
@@ -175,18 +175,18 @@ export default function PrivacyPageClient() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Shield className="w-8 h-8 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Your Privacy Rights
                 </h2>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                    <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                       Access & Correction
                     </h3>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                       <li>• Request access to your personal data</li>
                       <li>• Correct inaccurate information</li>
                       <li>• Update your account details</li>
@@ -195,10 +195,10 @@ export default function PrivacyPageClient() {
                   </div>
 
                   <div>
-                    <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                    <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                       Control & Deletion
                     </h3>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                       <li>• Opt out of marketing communications</li>
                       <li>• Request data deletion</li>
                       <li>• Close your account</li>
@@ -214,12 +214,12 @@ export default function PrivacyPageClient() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-8 text-center"
+              className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/40 rounded-xl p-8 text-center"
             >
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                 Privacy Questions?
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 If you have questions about this privacy policy or how we handle
                 your data, please don&apos;t hesitate to contact us.
               </p>
@@ -232,7 +232,7 @@ export default function PrivacyPageClient() {
                 </Link>
                 <Link
                   href="/contact"
-                  className="bg-white text-green-600 px-6 py-3 rounded-full font-semibold hover:bg-green-50 transition-colors"
+                  className="bg-white dark:bg-gray-800 text-green-600 px-6 py-3 rounded-full font-semibold hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                 >
                   Contact Form
                 </Link>
@@ -243,9 +243,9 @@ export default function PrivacyPageClient() {
       </section>
 
       {/* Footer */}
-      <section className="bg-gray-100 py-8">
+      <section className="bg-gray-100 dark:bg-gray-800 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Last updated:{" "}
             {new Date().toLocaleDateString("en-US", {
               year: "numeric",
@@ -253,7 +253,7 @@ export default function PrivacyPageClient() {
               day: "numeric",
             })}
           </p>
-          <p className="text-gray-500 mt-2">
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             This privacy policy may be updated from time to time. Please review
             it periodically.
           </p>

@@ -103,7 +103,7 @@ export default async function BlogPage({
             {blogs.map((blog) => (
               <article
                 key={blog.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
               >
                 {/* Cover Image */}
                 {blog.cover_image_url && (
@@ -125,7 +125,7 @@ export default async function BlogPage({
                       {blog.tags.map((tag: string) => (
                         <span
                           key={tag}
-                          className="px-2 py-1 bg-pink-100 text-pink-800 text-xs font-medium rounded-full"
+                          className="px-2 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-xs font-medium rounded-full"
                         >
                           {tag}
                         </span>
@@ -134,22 +134,22 @@ export default async function BlogPage({
                   )}
 
                   {/* Title */}
-                  <h2 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2">
                     <Link
                       href={`/blog/${blog.slug}`}
-                      className="hover:text-pink-600 transition-colors"
+                      className="hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
                     >
                       {blog.title}
                     </Link>
                   </h2>
 
                   {/* Excerpt */}
-                  <p className="text-gray-600 mb-4 line-clamp-3">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
                     {blog.excerpt}
                   </p>
 
                   {/* Meta */}
-                  <div className="flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                     <div className="flex items-center space-x-4">
                       <time dateTime={blog.created_at}>
                         {new Date(blog.created_at).toLocaleDateString("en-US", {
@@ -159,7 +159,7 @@ export default async function BlogPage({
                         })}
                       </time>
                       {blog.read_min && (
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 dark:text-gray-400">
                           • {blog.read_min} min read
                         </span>
                       )}
@@ -169,7 +169,7 @@ export default async function BlogPage({
                   {/* Read More */}
                   <Link
                     href={`/blog/${blog.slug}`}
-                    className="inline-flex items-center mt-4 text-pink-600 font-medium hover:text-pink-700 transition-colors"
+                    className="inline-flex items-center mt-4 text-pink-600 dark:text-pink-400 font-medium hover:text-pink-700 dark:hover:text-pink-300 transition-colors"
                   >
                     Read More
                     <svg

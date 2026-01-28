@@ -12,7 +12,7 @@ import {
 
 export default function TermsPageClient() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-green-50 dark:from-gray-900 dark:to-green-900/20">
       {/* Header */}
       <section className="bg-gradient-to-r from-green-600 to-green-700 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -45,12 +45,12 @@ export default function TermsPageClient() {
               transition={{ duration: 0.8 }}
               className="mb-12"
             >
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-3">
                   <CheckCircle className="w-6 h-6 text-green-600" />
                   Agreement to Terms
                 </h2>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   By accessing and using Ramana Handmade Collection&apos;s
                   website and services, you accept and agree to be bound by
                   these Terms &amp; Conditions. If you do not agree to these
@@ -69,17 +69,17 @@ export default function TermsPageClient() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Package className="w-8 h-8 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Products & Services
                 </h2>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                     Product Descriptions
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     We strive to be as accurate as possible in the descriptions
                     of our products. However, we do not warrant that product
                     descriptions, colors, or other content are accurate,
@@ -89,10 +89,10 @@ export default function TermsPageClient() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                     Pricing & Availability
                   </h3>
-                  <ul className="space-y-2 text-gray-600">
+                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                     <li>• Prices are subject to change without notice</li>
                     <li>• All prices are in Nepalese Rupees (NPR)</li>
                     <li>• Product availability is not guaranteed</li>
@@ -112,18 +112,18 @@ export default function TermsPageClient() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <ShoppingCart className="w-8 h-8 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Orders & Payment
                 </h2>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                    <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                       Order Process
                     </h3>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                       <li>• Orders are subject to acceptance by Ramana</li>
                       <li>• We may refuse or cancel orders for any reason</li>
                       <li>• Order confirmation will be sent via email</li>
@@ -133,10 +133,10 @@ export default function TermsPageClient() {
                   </div>
 
                   <div>
-                    <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                    <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                       Payment Terms
                     </h3>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                       <li>
                         • Payment must be received before order processing
                       </li>
@@ -159,11 +159,11 @@ export default function TermsPageClient() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="mb-12"
             >
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
-                <h3 className="font-semibold text-lg mb-3 text-gray-800">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
+                <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                   Delivery Policy
                 </h3>
-                <ul className="space-y-2 text-gray-600">
+                <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                   <li>• Delivery is available within Kathmandu valley</li>
                   <li>• Same-day delivery for orders placed before 12 PM</li>
                   <li>• Next-day delivery for orders placed after 12 PM</li>
@@ -184,22 +184,22 @@ export default function TermsPageClient() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <AlertCircle className="w-8 h-8 text-green-600" />
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Returns & Refunds
                 </h2>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-gray-800">
+                  <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                     Return Policy
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
                     Due to the perishable nature of our products, we generally
                     do not accept returns. However, customer satisfaction is our
                     priority.
                   </p>
-                  <ul className="space-y-2 text-gray-600">
+                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
                     <li>
                       • Notify us within 24 hours of delivery for any issues
                     </li>
@@ -221,11 +221,11 @@ export default function TermsPageClient() {
               transition={{ duration: 0.8, delay: 0.5 }}
               className="mb-12"
             >
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="font-semibold text-lg mb-3 text-gray-800">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                   Intellectual Property
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
                   All content on this website, including but not limited to
                   text, graphics, logos, images, and software, is the property
                   of Ramana Handmade Collection and is protected by copyright
@@ -249,11 +249,11 @@ export default function TermsPageClient() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="mb-12"
             >
-              <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-6 border border-red-200">
-                <h3 className="font-semibold text-lg mb-3 text-gray-800">
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-xl p-6 border border-red-200 dark:border-red-800">
+                <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-200">
                   Limitation of Liability
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
                   In no event shall Ramana Handmade Collection, its directors,
                   employees, or agents be liable for any indirect, incidental,
                   special, or consequential damages arising out of or in
@@ -273,12 +273,12 @@ export default function TermsPageClient() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.7 }}
-              className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-8 text-center"
+              className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/40 rounded-xl p-8 text-center"
             >
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                 Questions About These Terms?
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 If you have any questions about these Terms & Conditions, please
                 contact us:
               </p>
@@ -291,7 +291,7 @@ export default function TermsPageClient() {
                 </Link>
                 <Link
                   href="/contact"
-                  className="bg-white text-green-600 px-6 py-3 rounded-full font-semibold hover:bg-green-50 transition-colors"
+                  className="bg-white dark:bg-gray-800 text-green-600 px-6 py-3 rounded-full font-semibold hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                 >
                   Contact Form
                 </Link>
@@ -302,9 +302,9 @@ export default function TermsPageClient() {
       </section>
 
       {/* Footer */}
-      <section className="bg-gray-100 py-8">
+      <section className="bg-gray-100 dark:bg-gray-800 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Last updated:{" "}
             {new Date().toLocaleDateString("en-US", {
               year: "numeric",
@@ -312,7 +312,7 @@ export default function TermsPageClient() {
               day: "numeric",
             })}
           </p>
-          <p className="text-gray-500 mt-2">
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             These terms may be updated from time to time. Please review them
             periodically.
           </p>

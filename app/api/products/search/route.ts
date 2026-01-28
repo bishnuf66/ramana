@@ -15,20 +15,7 @@ export async function GET(request: NextRequest) {
     // Search products by title and description
     const { data: products, error } = await supabase
       .from("products")
-      .select(
-        `
-        id,
-        title,
-        description,
-        price,
-        discount_price,
-        category_id,
-        cover_image,
-        image_url,
-        stock,
-        is_featured
-      `,
-      )
+      .select("*")
       .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
       .order("is_featured", { ascending: false })
       .order("created_at", { ascending: false })
@@ -45,14 +32,11 @@ export async function GET(request: NextRequest) {
     // Transform products to match frontend format
     const transformedProducts =
       products?.map((product: any) => ({
-        id: product.id,
-        title: product.title,
-        description: product.description,
+        ...product,
         price: product.discount_price || product.price,
         originalPrice: product.price,
         category: "Bouquet", // Default category since we removed the join
         image: product.cover_image || product.image_url || "/placeholder.jpg",
-        stock: product.stock,
         isFeatured: product.is_featured,
       })) || [];
 

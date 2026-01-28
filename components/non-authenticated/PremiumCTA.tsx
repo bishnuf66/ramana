@@ -6,13 +6,13 @@ import Link from "next/link";
 
 export default function PremiumCTA() {
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-20 relative overflow-hidden dark:bg-gray-900">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-green-600 to-rose-500 opacity-10" />
 
       {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-rose-200 dark:bg-rose-900 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-200 dark:bg-green-900 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -43,8 +43,8 @@ export default function PremiumCTA() {
               Ready to Create Something Beautiful?
             </h2>
             <p className="text-xl md:text-2xl mb-8 text-green-100 max-w-2xl mx-auto">
-              Contact Ramana today for your custom handmade bouquet.
-              Call +977 98192747199 or message us on WhatsApp!
+              Contact Ramana today for your custom handmade bouquet. Call +977
+              98192747199 or message us on WhatsApp!
             </p>
 
             <motion.div

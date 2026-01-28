@@ -6,7 +6,7 @@ import { Home, Search, ArrowLeft, Flower } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-green-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4">
       <div className="text-center max-w-2xl">
         {/* Animated 404 Text */}
         <motion.div
@@ -27,14 +27,14 @@ export default function NotFound() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="mb-8"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Oops! Page Not Found
           </h2>
-          <p className="text-lg text-gray-600 mb-2">
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
             The page you&apos;re looking for seems to have vanished into thin
             air
           </p>
-          <p className="text-md text-gray-500">
+          <p className="text-md text-gray-500 dark:text-gray-400">
             Maybe it was eaten by a hungry caterpillar or simply never existed
           </p>
         </motion.div>
@@ -46,7 +46,7 @@ export default function NotFound() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mb-12"
         >
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-rose-100 to-green-100 rounded-full">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-rose-100 dark:from-rose-900 to-green-100 dark:to-green-900 rounded-full">
             <Flower className="w-12 h-12 text-rose-500" />
           </div>
         </motion.div>
@@ -68,7 +68,7 @@ export default function NotFound() {
 
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-white text-gray-700 font-medium rounded-full border-2 border-gray-200 hover:border-rose-300 hover:shadow-md transform hover:scale-105 transition-all duration-300"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-full border-2 border-gray-200 dark:border-gray-600 hover:border-rose-300 dark:hover:border-rose-400 hover:shadow-md transform hover:scale-105 transition-all duration-300"
           >
             <ArrowLeft className="w-5 h-5" />
             Dashboard
@@ -88,31 +88,35 @@ export default function NotFound() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="mt-16 p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100"
+          className="mt-16 p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-100 dark:border-gray-700"
         >
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">
             Looking for something specific?
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-            <div className="text-center p-3 bg-rose-50 rounded-lg">
-              <div className="text-rose-500 font-medium mb-1">
+            <div className="text-center p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+              <div className="text-rose-500 dark:text-rose-400 font-medium mb-1">
                 Fresh Flowers
               </div>
-              <div className="text-gray-600">
+              <div className="text-gray-600 dark:text-gray-300">
                 Beautiful bouquets & arrangements
               </div>
             </div>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-green-500 font-medium mb-1">
+            <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="text-green-500 dark:text-green-400 font-medium mb-1">
                 Premium Handcrafted
               </div>
-              <div className="text-gray-600">Unique floral arrangements</div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Unique floral arrangements
+              </div>
             </div>
-            <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <div className="text-purple-500 font-medium mb-1">
+            <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <div className="text-purple-500 dark:text-purple-400 font-medium mb-1">
                 Accessories
               </div>
-              <div className="text-gray-600">Vases & decorative items</div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Vases & decorative items
+              </div>
             </div>
           </div>
         </motion.div>

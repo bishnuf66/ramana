@@ -211,25 +211,30 @@ export default async function BlogPostPage({
           <nav className="flex" aria-label="Breadcrumb">
             <ol className="flex items-center space-x-2">
               <li>
-                <Link href="/" className="text-gray-500 hover:text-gray-700">
+                <Link
+                  href="/"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                >
                   Home
                 </Link>
               </li>
               <li>
-                <span className="text-gray-400">/</span>
+                <span className="text-gray-400 dark:text-gray-500">/</span>
               </li>
               <li>
                 <Link
                   href="/blog"
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   Blog
                 </Link>
               </li>
               <li>
-                <span className="text-gray-400">/</span>
+                <span className="text-gray-400 dark:text-gray-500">/</span>
               </li>
-              <li className="text-gray-900 font-medium">{blog.title}</li>
+              <li className="text-gray-900 dark:text-white font-medium">
+                {blog.title}
+              </li>
             </ol>
           </nav>
         </div>
@@ -237,9 +242,12 @@ export default async function BlogPostPage({
         {/* Article Content */}
         <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Meta Information */}
-          <div className="flex items-center justify-between mb-8 pb-8 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-4">
-              <time dateTime={blog.created_at} className="text-gray-600">
+              <time
+                dateTime={blog.created_at}
+                className="text-gray-600 dark:text-gray-400"
+              >
                 {new Date(blog.created_at).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
@@ -247,7 +255,7 @@ export default async function BlogPostPage({
                 })}
               </time>
               {blog.read_min && (
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-gray-400">
                   • {blog.read_min} min read
                 </span>
               )}
@@ -259,7 +267,7 @@ export default async function BlogPostPage({
                 {blog.tags.map((tag: string) => (
                   <span
                     key={tag}
-                    className="px-3 py-1 bg-pink-100 text-pink-800 text-sm font-medium rounded-full"
+                    className="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-sm font-medium rounded-full"
                   >
                     {tag}
                   </span>
@@ -277,10 +285,10 @@ export default async function BlogPostPage({
           />
 
           {/* Back to Blog Button */}
-          <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
             <Link
               href="/blog"
-              className="inline-flex items-center text-pink-600 font-medium hover:text-pink-700 transition-colors"
+              className="inline-flex items-center text-pink-600 dark:text-pink-400 font-medium hover:text-pink-700 dark:hover:text-pink-300 transition-colors"
             >
               <svg
                 className="mr-2 w-5 h-5"

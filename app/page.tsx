@@ -74,7 +74,7 @@ export default function Page() {
       {/* Products Section */}
       <section
         id="products"
-        className="py-20 bg-gradient-to-b from-white to-green-50/30"
+        className="py-20 bg-gradient-to-b from-white to-green-50/30 dark:from-gray-900 dark:to-green-900/20"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -84,10 +84,10 @@ export default function Page() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
               Our <span className="text-gradient">Featured Collection</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Handpicked arrangements crafted with love and attention to detail
             </p>
           </motion.div>

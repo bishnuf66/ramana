@@ -91,7 +91,7 @@ export default function ProductSearch({
   const handleResultClick = (product: Product) => {
     setQuery("");
     setShowResults(false);
-    router.push(`/products/${product.id}`);
+    router.push(`/products/${product.slug}`);
   };
 
   const handleSeeAllResults = () => {
