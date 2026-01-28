@@ -19,6 +19,9 @@ import {
   Mail,
   FileText,
   Image as ImageIcon,
+  ArrowLeft,
+  ShoppingCart,
+  AlertCircle,
 } from "lucide-react";
 import { Database } from "@/types/database.types";
 import { supabase } from "@/lib/supabase/client";
@@ -113,8 +116,8 @@ export default function OrderViewModal({
 
   const getPaymentStatusColor = (isVerified: boolean) => {
     return isVerified
-      ? "bg-green-100 text-green-800"
-      : "bg-yellow-100 text-yellow-800";
+      ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+      : "bg-amber-100 text-amber-800 border border-amber-200";
   };
 
   const formatCurrency = (amount: number) => {
@@ -384,11 +387,21 @@ export default function OrderViewModal({
                           <div>
                             <div className="flex items-center gap-2">
                               <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(
+                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getPaymentStatusColor(
                                   payment.is_verified,
                                 )}`}
                               >
-                                {payment.is_verified ? "Verified" : "Pending"}
+                                {payment.is_verified ? (
+                                  <>
+                                    <CheckCircle className="w-3 h-3" />
+                                    Payment Verified
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertCircle className="w-3 h-3" />
+                                    Awaiting Verification
+                                  </>
+                                )}
                               </span>
                               <span className="text-sm text-gray-600 dark:text-gray-400">
                                 {payment.payment_type}
