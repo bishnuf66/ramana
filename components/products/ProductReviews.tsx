@@ -282,9 +282,9 @@ export default function ProductReviews({
         .select("id")
         .eq("product_id", productId)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (reviewCheckError && reviewCheckError.code !== "PGRST116") {
+      if (reviewCheckError) {
         console.error("Error checking existing review:", reviewCheckError);
         toast.error("Failed to check existing review");
         return;
