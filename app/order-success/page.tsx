@@ -18,6 +18,7 @@ interface OrderItem {
   price: number;
   quantity: number;
   cover_image?: string;
+  discount_price?: number;
 }
 
 function OrderSuccessContent() {
@@ -26,6 +27,9 @@ function OrderSuccessContent() {
   const itemsParam = searchParams.get("items");
   const [items, setItems] = useState<OrderItem[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [subtotal, setSubtotal] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [deliveryCharge, setDeliveryCharge] = useState(100); // Default delivery charge
 
   useEffect(() => {
     if (itemsParam) {
@@ -33,17 +37,36 @@ function OrderSuccessContent() {
         const decodedItems = JSON.parse(decodeURIComponent(itemsParam));
         setItems(decodedItems);
 
-        // Calculate total amount
-        const total = decodedItems.reduce(
-          (sum: number, item: OrderItem) => sum + item.price * item.quantity,
+        // Calculate subtotal (items total without discount)
+        const itemsSubtotal = decodedItems.reduce(
+          (sum: number, item: OrderItem) => {
+            const itemPrice = item.discount_price || item.price;
+            return sum + itemPrice * item.quantity;
+          },
           0,
         );
+        setSubtotal(itemsSubtotal);
+
+        // Calculate discount amount
+        const totalDiscount = decodedItems.reduce(
+          (sum: number, item: OrderItem) => {
+            if (item.discount_price) {
+              return sum + (item.price - item.discount_price) * item.quantity;
+            }
+            return sum;
+          },
+          0,
+        );
+        setDiscountAmount(totalDiscount);
+
+        // Calculate total amount (subtotal + delivery charge - discount)
+        const total = itemsSubtotal + deliveryCharge;
         setTotalAmount(total);
       } catch (error) {
         console.error("Error parsing items:", error);
       }
     }
-  }, [itemsParam]);
+  }, [itemsParam, deliveryCharge]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
@@ -125,25 +148,62 @@ function OrderSuccessContent() {
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             Quantity: {item.quantity}
                           </p>
+                          {item.discount_price && (
+                            <p className="text-sm text-green-600 dark:text-green-400">
+                              Discount: NPR {item.price - item.discount_price}{" "}
+                              off each
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          NPR {item.price * item.quantity}
+                          NPR{" "}
+                          {(item.discount_price || item.price) * item.quantity}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          NPR {item.price} each
+                          NPR {item.discount_price || item.price} each
+                          {item.discount_price && (
+                            <span className="text-gray-400 line-through ml-1">
+                              NPR {item.price}
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Total Amount */}
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                  <div className="flex justify-between items-center">
+                {/* Order Summary */}
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Subtotal
+                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      NPR {subtotal}
+                    </span>
+                  </div>
+
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Discount</span>
+                      <span>-NPR {discountAmount}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Delivery Charge
+                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      NPR {deliveryCharge}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
                     <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Total Amount:
+                      Total Amount
                     </span>
                     <span className="text-lg font-bold text-green-600 dark:text-green-400">
                       NPR {totalAmount}
