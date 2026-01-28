@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import ProductCard from "../products/ProductCard";
 import { supabase } from "@/lib/supabase/client";
 import { Tables } from "../../types/database.types";
@@ -8,57 +9,47 @@ import { Tables } from "../../types/database.types";
 // Use the generated Supabase type
 type Product = Tables<"products">;
 
+interface ProductsPage {
+  products: Product[];
+  hasMore: boolean;
+  currentPage: number;
+}
+
 const ExploreProducts: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 8;
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteQuery({
+      queryKey: ["featured-products"],
+      queryFn: async ({ pageParam }: { pageParam: number }) => {
+        const offset = pageParam * 8;
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+        const { data, error } = await supabase
+          .from("products")
+          .select("*", { count: "exact" })
+          .eq("is_featured", true) // Only fetch featured products
+          .order("created_at", { ascending: false })
+          .range(offset, offset + 8 - 1);
 
-  const fetchProducts = async (page: number = 1, append: boolean = false) => {
-    try {
-      const offset = (page - 1) * productsPerPage;
+        if (error) throw error;
 
-      const { data, error } = await supabase
-        .from("products")
-        .select("*", { count: "exact" })
-        .eq("is_featured", true) // Only fetch featured products
-        .order("created_at", { ascending: false })
-        .range(offset, offset + productsPerPage - 1);
+        return {
+          products: data || [],
+          hasMore: data?.length === 8,
+          currentPage: pageParam + 1,
+        };
+      },
+      getNextPageParam: (lastPage: ProductsPage, allPages: ProductsPage[]) => {
+        if (lastPage?.hasMore) {
+          return lastPage.currentPage;
+        }
+        return undefined;
+      },
+      initialPageParam: 0,
+    });
 
-      if (error) throw error;
+  const products = data?.pages.flatMap((page) => page.products) || [];
+  const shouldShowLoadMore = hasNextPage && products.length >= 6;
 
-      const newHasMore = data?.length === productsPerPage;
-
-      if (append) {
-        setProducts((prev) => [...prev, ...(data || [])]);
-      } else {
-        setProducts(data || []);
-      }
-
-      setHasMore(newHasMore);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
-
-  const loadMore = () => {
-    if (!loadingMore && hasMore) {
-      setLoadingMore(true);
-      fetchProducts(currentPage + 1, true);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-8">
         <div className="flex flex-row justify-between mb-4">
@@ -108,14 +99,14 @@ const ExploreProducts: React.FC = () => {
       </div>
 
       {/* Load More Button */}
-      {hasMore && products.length > 0 && (
+      {shouldShowLoadMore && (
         <div className="flex justify-center mt-8">
           <button
-            onClick={loadMore}
-            disabled={loadingMore}
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
             className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
           >
-            {loadingMore ? (
+            {isFetchingNextPage ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 Loading...
@@ -143,7 +134,7 @@ const ExploreProducts: React.FC = () => {
       )}
 
       {/* End of Products Message */}
-      {!hasMore && products.length > 0 && (
+      {!hasNextPage && products.length > 0 && (
         <div className="text-center mt-8 text-gray-500">
           <p className="text-sm">
             You've reached the end of our featured products.
