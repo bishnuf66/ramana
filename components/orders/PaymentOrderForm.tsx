@@ -16,6 +16,7 @@ import {
   CouponValidationResult,
 } from "@/lib/orders";
 import { Tables } from "@/types/database.types";
+import { useCart } from "../context/CartContext";
 
 type PaymentOption = Tables<"payment_options">;
 
@@ -34,6 +35,7 @@ export default function PaymentOrderForm({
   onCancel,
   isModal = true,
 }: PaymentOrderFormProps) {
+  const { removeFromCart } = useCart(); // Add cart context
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
@@ -48,7 +50,7 @@ export default function PaymentOrderForm({
   const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [paymentType, setPaymentType] = useState<"full" | "partial">("full");
-  const [partialPaymentPercentage, setPartialPaymentPercentage] = useState(50);
+  const [partialPaymentPercentage, setPartialPaymentPercentage] = useState(30);
 
   const [formData, setFormData] = useState<OrderData>({
     customer_name: "",
@@ -59,7 +61,7 @@ export default function PaymentOrderForm({
     total_amount: totalAmount,
     payment_method: "", // Will be set to UUID when payment options are loaded
     payment_type: "full",
-    partial_payment_percentage: 50,
+    partial_payment_percentage: 30,
     notes: "",
     delivery_location: "inside_kathmandu",
     delivery_charge: 100,
@@ -265,6 +267,11 @@ export default function PaymentOrderForm({
 
       const order = await createOrder(orderData);
       toast.success("Order placed successfully!");
+
+      // Remove purchased items from cart
+      items.forEach((item: any) => {
+        removeFromCart(item.id);
+      });
 
       // Redirect to success page with order ID and items
       const itemsData = encodeURIComponent(JSON.stringify(items));
@@ -629,7 +636,7 @@ export default function PaymentOrderForm({
             <div className="flex items-center gap-4">
               <input
                 type="range"
-                min="10"
+                min="30"
                 max="90"
                 step="10"
                 value={partialPaymentPercentage}
