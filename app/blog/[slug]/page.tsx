@@ -84,8 +84,8 @@ export async function generateMetadata(
 
 // Generate static params for ISR
 export async function generateStaticParams() {
-  const blogs = await getBlogs();
-  return blogs.map((blog: Blog) => ({
+  const blogsData = await getBlogs();
+  return blogsData?.blogs?.map((blog: Blog) => ({
     slug: blog.slug,
   }));
 }
