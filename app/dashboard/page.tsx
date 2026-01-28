@@ -32,6 +32,9 @@ import {
   requestOrderCancellation,
   withdrawCancellationRequest,
 } from "@/lib/orders";
+import { Database } from "@/types/database.types";
+
+type Order = Database["public"]["Tables"]["orders"]["Row"];
 
 interface UserProfile {
   id: string;
@@ -41,21 +44,6 @@ interface UserProfile {
   address?: string;
   avatar_url?: string;
   created_at: string;
-}
-
-interface UserOrder {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone?: string;
-  shipping_address: string;
-  total_amount: number;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  items: any;
-  created_at: string;
-  cancellation_request?: boolean;
-  cancellation_reason?: string;
-  cancellation_requested_at?: string;
 }
 
 interface UserReview {
@@ -78,7 +66,7 @@ export default function UserDashboard() {
     "overview" | "orders" | "reviews" | "profile"
   >("overview");
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [orders, setOrders] = useState<UserOrder[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingReview, setEditingReview] = useState<string | null>(null);
@@ -128,7 +116,7 @@ export default function UserDashboard() {
         .order("created_at", { ascending: false });
 
       if (!ordersError && ordersData) {
-        setOrders(ordersData as UserOrder[]);
+        setOrders(ordersData as Order[]);
       }
 
       // Load user reviews
@@ -320,15 +308,17 @@ export default function UserDashboard() {
     setCancellingOrder(null);
   };
 
-  const canCancelOrder = (order: UserOrder) => {
-    const orderDate = new Date(order.created_at);
+  const canCancelOrder = (order: Order) => {
+    const orderDate = order.created_at
+      ? new Date(order.created_at)
+      : new Date();
     const now = new Date();
     const hoursSinceOrder =
       (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60);
 
     return (
       hoursSinceOrder <= 24 &&
-      order.status === "pending" &&
+      order.order_status === "pending" &&
       !order.cancellation_request
     );
   };
@@ -507,9 +497,11 @@ export default function UserDashboard() {
                                 Order #{order.id.slice(0, 8)}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {new Date(
-                                  order.created_at,
-                                ).toLocaleDateString()}
+                                {order.created_at
+                                  ? new Date(
+                                      order.created_at,
+                                    ).toLocaleDateString()
+                                  : "N/A"}
                               </p>
                             </div>
                             <div className="text-right">
@@ -518,18 +510,18 @@ export default function UserDashboard() {
                               </p>
                               <span
                                 className={`text-xs px-2 py-1 rounded-full ${
-                                  order.status === "delivered"
+                                  order.order_status === "delivered"
                                     ? "bg-green-100 text-green-800"
-                                    : order.status === "shipped"
+                                    : order.order_status === "shipped"
                                       ? "bg-blue-100 text-blue-800"
-                                      : order.status === "processing"
+                                      : order.order_status === "processing"
                                         ? "bg-yellow-100 text-yellow-800"
-                                        : order.status === "cancelled"
+                                        : order.order_status === "cancelled"
                                           ? "bg-red-100 text-red-800"
                                           : "bg-gray-100 text-gray-800"
                                 }`}
                               >
-                                {order.status}
+                                {order.order_status}
                               </span>
                             </div>
                           </div>

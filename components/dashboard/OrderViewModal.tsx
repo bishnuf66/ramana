@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Database } from "@/types/database.types";
 import { supabase } from "@/lib/supabase/client";
+import { Button } from "@/components/ui";
 
 type Order = Database["public"]["Tables"]["orders"]["Row"];
 type UserPayment = Database["public"]["Tables"]["user_payments"]["Row"] & {
@@ -149,12 +150,9 @@ export default function OrderViewModal({
                   Order #{order.id?.slice(0, 8) || "N/A"}
                 </p>
               </div>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
+              <Button onClick={onClose} variant="ghost" size="icon">
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
           </div>
 

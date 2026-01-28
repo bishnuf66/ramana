@@ -15,30 +15,14 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import OrderViewModal from "./OrderViewModal";
+import { Database } from "@/types/database.types";
+import { Button } from "@/components/ui";
 
-interface UserOrder {
-  id: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone?: string;
-  shipping_address: string;
-  total_amount: number;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  items: any;
-  created_at: string;
-  cancellation_request?: boolean;
-  cancellation_reason?: string;
-  cancellation_requested_at?: string;
-  payment_status?: string;
-  remaining_amount?: number;
-  return_request?: any;
-  return_reason?: string;
-  return_requested_at?: string;
-}
+type Order = Database["public"]["Tables"]["orders"]["Row"];
 
 interface OrdersTabProps {
-  orders: UserOrder[];
-  canCancelOrder: (order: UserOrder) => boolean;
+  orders: Order[];
+  canCancelOrder: (order: Order) => boolean;
   openCancellationModal: (orderId: string) => void;
   handleWithdrawCancellation: (orderId: string) => void;
 }
@@ -51,7 +35,7 @@ export default function OrdersTab({
 }: OrdersTabProps) {
   const router = useRouter();
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<UserOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handlePayRemaining = (orderId: string) => {
@@ -64,7 +48,7 @@ export default function OrdersTab({
     router.push(`/return/${orderId}`);
   };
 
-  const handleViewDetails = (order: UserOrder) => {
+  const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
@@ -146,7 +130,9 @@ export default function OrdersTab({
                   <div className="flex items-center gap-2 mt-1">
                     <Calendar className="w-4 h-4 text-gray-400" />
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {new Date(order.created_at).toLocaleDateString()}
+                      {order.created_at
+                        ? new Date(order.created_at).toLocaleDateString()
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -157,10 +143,10 @@ export default function OrdersTab({
                   <div className="flex gap-2 mt-1">
                     <span
                       className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
-                        order.status,
+                        order.order_status,
                       )}`}
                     >
-                      {order.status}
+                      {order.order_status?.toUpperCase()}
                     </span>
                     {order.payment_status && (
                       <span
@@ -337,46 +323,55 @@ export default function OrdersTab({
               {/* Action Buttons */}
               <div className="mt-4 flex flex-wrap gap-2">
                 {/* View Details Button */}
-                <button
+                <Button
                   onClick={() => handleViewDetails(order)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  variant="primary"
+                  size="sm"
+                  className="flex items-center gap-2"
                 >
                   <FileText className="w-4 h-4" />
                   View Details
-                </button>
+                </Button>
 
                 {/* Cancellation Button */}
                 {canCancelOrder(order) && (
-                  <button
+                  <Button
                     onClick={() => openCancellationModal(order.id)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    variant="destructive"
+                    size="sm"
+                    className="flex items-center gap-2"
                   >
                     <XCircle className="w-4 h-4" />
                     Request Cancellation
-                  </button>
+                  </Button>
                 )}
 
                 {/* Pay Remaining Button */}
                 {order.remaining_amount && order.remaining_amount > 0 && (
-                  <button
+                  <Button
                     onClick={() => handlePayRemaining(order.id)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                    variant="secondary"
+                    size="sm"
+                    className="flex items-center gap-2"
                   >
                     <CreditCard className="w-4 h-4" />
                     Pay Remaining
-                  </button>
+                  </Button>
                 )}
 
                 {/* Return Button */}
-                {order.status === "delivered" && !order.return_request && (
-                  <button
-                    onClick={() => handleReturnRequest(order.id)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    Request Return
-                  </button>
-                )}
+                {order.order_status === "delivered" &&
+                  !order.return_request && (
+                    <Button
+                      onClick={() => handleReturnRequest(order.id)}
+                      variant="secondary"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Request Return
+                    </Button>
+                  )}
               </div>
             </div>
           </motion.div>
