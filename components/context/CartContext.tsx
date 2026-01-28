@@ -9,6 +9,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { supabase } from "@/lib/supabase/client";
 import { Tables } from "@/types/database.types";
@@ -62,10 +63,12 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const queryClient = useQueryClient();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartReferences, setCartReferences] = useState<CartItemReference[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
+  const [loading, setLoading] = useState(true);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Confirmation modal state
@@ -73,6 +76,51 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     isOpen: false,
     itemToRemove: null as number | string | null,
     itemName: "",
+  });
+
+  // Query for fetching user cart from database
+  const { data: userCartData, isLoading: cartLoading } = useQuery({
+    queryKey: ["user-cart", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+
+      const { data, error } = await supabase
+        .from("user_cart")
+        .select("items")
+        .eq("user_id", userId)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        throw error;
+      }
+
+      return data?.items || [];
+    },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  // Mutation for updating cart in database
+  const updateCartMutation = useMutation({
+    mutationFn: async (items: CartItemReference[]) => {
+      if (!userId) throw new Error("User not authenticated");
+
+      const { error } = await supabase.from("user_cart").upsert({
+        user_id: userId,
+        items: items,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-cart"] });
+      toast.success("Cart updated successfully");
+    },
+    onError: (error) => {
+      console.error("Error updating cart:", error);
+      toast.error("Failed to update cart");
+    },
   });
 
   // Track auth changes

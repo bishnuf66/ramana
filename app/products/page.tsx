@@ -88,9 +88,10 @@ async function fetchProductsData(page: number = 1, limit: number = 12) {
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams?: { page?: string };
+  searchParams?: Promise<{ page?: string }>;
 }) {
-  const page = parseInt(searchParams?.page || "1") || 1;
+  const resolvedSearchParams = await searchParams;
+  const page = parseInt(resolvedSearchParams?.page || "1") || 1;
   const { products, categories, pagination } = await fetchProductsData(page);
 
   // Structured data for product collection

@@ -3,17 +3,24 @@
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { Search, Filter, Grid, List } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import ProductCard from "./ProductCard";
 import ProductFiltersPanel from "./ProductFiltersPanel";
 import Pagination from "../ui/Pagination";
-import { toast } from "react-toastify";
-import { useSearchParams } from "next/navigation";
 import { Tables } from "@/types/database.types";
+import { toast } from "react-toastify";
 
+// Use the generated Supabase type
 type Product = Tables<"products">;
 type ProductReview = Tables<"product_reviews">;
 type Category = Tables<"categories">;
+
+interface ProductWithRating extends Product {
+  averageRating?: number;
+  reviewCount: number;
+}
 
 type ProductFilters = {
   category_id?: string;
@@ -25,11 +32,6 @@ type ProductFilters = {
 type ProductSort = {
   field: "name" | "price" | "rating" | "createdAt";
   direction: "asc" | "desc";
-};
-
-type ProductWithRating = Product & {
-  averageRating?: number;
-  reviewCount?: number;
 };
 
 type PaginationData = {
@@ -70,31 +72,26 @@ function ProductsPageInner({
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
-  const [products, setProducts] = useState<ProductWithRating[]>([]);
 
-  // Initialize with server data, then keep synced
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
+  // Use TanStack Query for client-side data fetching
+  const {
+    data: productsData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["products-with-reviews"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select(`
+        *,
+        product_reviews (
+          rating
+        )
+      `);
 
-        const { data: productsData, error: productsError } =
-          await supabase.from("products").select(`
-            *,
-            product_reviews (
-              rating
-            )
-          `);
+      if (error) throw error;
 
-        if (productsError) {
-          console.error("Error fetching products:", productsError);
-          toast.error("Failed to load products");
-          return;
-        }
-
-        const productsWithRatings: ProductWithRating[] = (
-          productsData || []
-        ).map((product: any) => {
+      const productsWithRatings: ProductWithRating[] = (data || []).map(
+        (product: any) => {
           const reviews = product.product_reviews || [];
           const validRatings = reviews.filter(
             (review: any) => review.rating != null,
@@ -116,19 +113,23 @@ function ProductsPageInner({
             averageRating,
             reviewCount,
           };
-        });
+        },
+      );
 
-        setProducts(productsWithRatings);
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("An error occurred while loading products");
-      } finally {
-        setLoading(false);
-      }
-    };
+      return productsWithRatings;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-    fetchProducts();
-  }, []);
+  // Handle error
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Failed to load products");
+    }
+  }, [error]);
+
+  const products = productsData || [];
 
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = (
@@ -203,7 +204,7 @@ function ProductsPageInner({
 
   const displayProducts = products.length > 0 ? products : initialProducts;
 
-  if (loading && products.length === 0) {
+  if (isLoading && products.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
