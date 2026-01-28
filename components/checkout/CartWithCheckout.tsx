@@ -5,8 +5,27 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Trash2, Plus, Minus, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
-import { CartItem } from "@/types/order";
+import { Tables } from "@/types/database.types";
 import Checkout from "./Checkout";
+
+type CartItem = {
+  id: string;
+  product_id: string;
+  title: string;
+  price: number;
+  discount_price?: number;
+  cover_image: string;
+  quantity: number;
+  slug: string;
+  products?: {
+    id: string;
+    title: string;
+    price: number;
+    discount_price?: number;
+    cover_image: string;
+    slug: string;
+  };
+};
 
 export default function CartWithCheckout() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -21,14 +40,18 @@ export default function CartWithCheckout() {
   }, []);
 
   const fetchUser = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
     setUser(authUser);
   };
 
   const fetchCartItems = async () => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
       if (!authUser) {
         setLoading(false);
         return;
@@ -36,10 +59,12 @@ export default function CartWithCheckout() {
 
       const { data, error } = await supabase
         .from("cart_items")
-        .select(`
+        .select(
+          `
           *,
           products (*)
-        `)
+        `,
+        )
         .eq("user_id", authUser.id);
 
       if (error) throw error;
@@ -63,10 +88,10 @@ export default function CartWithCheckout() {
 
       if (error) throw error;
 
-      setCartItems(prev =>
-        prev.map(item =>
-          item.id === itemId ? { ...item, quantity: newQuantity } : item
-        )
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item,
+        ),
       );
     } catch (error) {
       console.error("Error updating quantity:", error);
@@ -83,8 +108,8 @@ export default function CartWithCheckout() {
 
       if (error) throw error;
 
-      setCartItems(prev => prev.filter(item => item.id !== itemId));
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
+      setCartItems((prev) => prev.filter((item) => item.id !== itemId));
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
       toast.success("Item removed from cart");
     } catch (error) {
       console.error("Error removing item:", error);
@@ -93,10 +118,10 @@ export default function CartWithCheckout() {
   };
 
   const toggleItemSelection = (productId: string) => {
-    setSelectedItems(prev =>
+    setSelectedItems((prev) =>
       prev.includes(productId)
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId],
     );
   };
 
@@ -104,14 +129,17 @@ export default function CartWithCheckout() {
     if (selectedItems.length === cartItems.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(cartItems.map(item => item.product_id));
+      setSelectedItems(cartItems.map((item) => item.product_id));
     }
   };
 
   const getSelectedItemsTotal = () => {
     return cartItems
-      .filter(item => selectedItems.includes(item.product_id))
-      .reduce((total, item) => total + ((item.products?.price || 0) * item.quantity), 0);
+      .filter((item) => selectedItems.includes(item.product_id))
+      .reduce(
+        (total, item) => total + (item.products?.price || 0) * item.quantity,
+        0,
+      );
   };
 
   const handleCheckoutComplete = (order: any) => {
@@ -170,8 +198,12 @@ export default function CartWithCheckout() {
               onClick={selectAllItems}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
-              <Check className={`w-4 h-4 ${selectedItems.length === cartItems.length ? 'text-green-600' : ''}`} />
-              {selectedItems.length === cartItems.length ? 'Deselect All' : 'Select All'}
+              <Check
+                className={`w-4 h-4 ${selectedItems.length === cartItems.length ? "text-green-600" : ""}`}
+              />
+              {selectedItems.length === cartItems.length
+                ? "Deselect All"
+                : "Select All"}
             </button>
           </div>
         </div>
@@ -220,10 +252,14 @@ export default function CartWithCheckout() {
 
                   {/* Quantity Controls */}
                   <div className="flex items-center gap-3 mt-3">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Quantity:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Quantity:
+                    </span>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, item.quantity - 1)
+                        }
                         className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
                         <Minus className="w-4 h-4" />
@@ -232,7 +268,9 @@ export default function CartWithCheckout() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, item.quantity + 1)
+                        }
                         className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
                         <Plus className="w-4 h-4" />

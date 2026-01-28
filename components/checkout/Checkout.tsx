@@ -5,7 +5,68 @@ import { motion } from "framer-motion";
 import { ShoppingCart, CreditCard, Upload, X, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
-import { CartItem, Order, OrderFormData, PAYMENT_METHODS } from "@/types/order";
+import { Tables, Database } from "@/types/database.types";
+
+type CartItem = {
+  id: string;
+  product_id: string;
+  title: string;
+  price: number;
+  discount_price?: number;
+  cover_image: string;
+  quantity: number;
+  slug: string;
+  products?: {
+    id: string;
+    title: string;
+    price: number;
+    discount_price?: number;
+    cover_image: string;
+    slug: string;
+  };
+};
+
+type Order = Tables<"orders"> & {
+  payment_method?: string;
+};
+
+type OrderFormData = {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  shipping_address: string;
+  payment_method: string;
+  notes: string;
+  items?: any;
+  total_amount?: number;
+  user_id?: string;
+  order_status?: string;
+  payment_status?: string;
+};
+
+const PAYMENT_METHODS = [
+  {
+    id: "esewa",
+    name: "eSewa",
+    displayName: "eSewa",
+    description: "Pay via eSewa wallet",
+    requiresScreenshot: false,
+  },
+  {
+    id: "khalti",
+    name: "Khalti",
+    displayName: "Khalti",
+    description: "Pay via Khalti wallet",
+    requiresScreenshot: false,
+  },
+  {
+    id: "bank_transfer",
+    name: "Bank Transfer",
+    displayName: "Bank Transfer",
+    description: "Direct bank transfer",
+    requiresScreenshot: true,
+  },
+] as const;
 
 interface CheckoutProps {
   selectedItems: string[];
@@ -13,20 +74,24 @@ interface CheckoutProps {
   onCancel: () => void;
 }
 
-export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }: CheckoutProps) {
+export default function Checkout({
+  selectedItems,
+  onCheckoutComplete,
+  onCancel,
+}: CheckoutProps) {
   const [loading, setLoading] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [user, setUser] = useState<any>(null);
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string>("");
-  
+
   const [formData, setFormData] = useState<OrderFormData>({
     customer_name: "",
     customer_email: "",
     customer_phone: "",
     shipping_address: "",
     payment_method: "cod",
-    notes: ""
+    notes: "",
   });
 
   const [totalAmount, setTotalAmount] = useState(0);
@@ -38,7 +103,9 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
   const fetchUserAndCartItems = async () => {
     try {
       // Get current user
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
       setUser(authUser);
 
       // Get cart items
@@ -57,27 +124,31 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
         return;
       }
 
-      const { data: items, error } = await query.in("product_id", selectedItems);
+      const { data: items, error } = await query.in(
+        "product_id",
+        selectedItems,
+      );
 
       if (error) throw error;
 
       // Filter only selected items
-      const selectedCartItems = items?.filter(item => selectedItems.includes(item.product_id)) || [];
+      const selectedCartItems =
+        items?.filter((item) => selectedItems.includes(item.product_id)) || [];
       setCartItems(selectedCartItems);
 
       // Calculate total
       const total = selectedCartItems.reduce((sum, item) => {
         const price = item.products?.price || 0;
-        return sum + (price * item.quantity);
+        return sum + price * item.quantity;
       }, 0);
       setTotalAmount(total);
 
       // Pre-fill form data if user is logged in
       if (authUser?.user_metadata) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           customer_name: authUser.user_metadata.full_name || "",
-          customer_email: authUser.email || ""
+          customer_email: authUser.email || "",
         }));
       }
     } catch (error) {
@@ -86,10 +157,13 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
     }
   };
 
-  const handlePaymentScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePaymentScreenshotChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
         toast.error("Screenshot must be less than 5MB");
         return;
       }
@@ -100,7 +174,7 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
       }
 
       setPaymentScreenshot(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -118,7 +192,10 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
       let screenshotUrl = "";
 
       // Upload payment screenshot if required
-      if (PAYMENT_METHODS.find(m => m.id === formData.payment_method)?.requiresScreenshot) {
+      if (
+        PAYMENT_METHODS.find((m) => m.id === formData.payment_method)
+          ?.requiresScreenshot
+      ) {
         if (!paymentScreenshot) {
           toast.error("Please upload payment screenshot");
           setLoading(false);
@@ -132,20 +209,20 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("payment-screenshots")
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("payment-screenshots").getPublicUrl(fileName);
 
         screenshotUrl = publicUrl;
       }
 
       // Prepare order items
-      const orderItems = cartItems.map(item => ({
+      const orderItems = cartItems.map((item) => ({
         id: item.product_id,
         title: item.products?.title || "",
         price: item.products?.price || 0,
         quantity: item.quantity,
-        cover_image: item.products?.cover_image || ""
+        cover_image: item.products?.cover_image || "",
       }));
 
       // Create order
@@ -158,14 +235,15 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
         total_amount: totalAmount,
         status: "pending",
         payment_method: formData.payment_method,
-        payment_status: formData.payment_method === "cod" ? "pending" : "pending",
+        payment_status:
+          formData.payment_method === "cod" ? "pending" : "pending",
         payment_screenshot: screenshotUrl || null,
         items: orderItems,
-        cart_items: cartItems.map(item => ({
+        cart_items: cartItems.map((item) => ({
           product_id: item.product_id,
-          quantity: item.quantity
+          quantity: item.quantity,
         })),
-        notes: formData.notes
+        notes: formData.notes,
       };
 
       const { data: order, error: orderError } = await supabase
@@ -187,7 +265,6 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
 
       toast.success("Order placed successfully!");
       onCheckoutComplete(order);
-
     } catch (error) {
       console.error("Error placing order:", error);
       toast.error("Failed to place order");
@@ -196,7 +273,9 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
     }
   };
 
-  const selectedPaymentMethod = PAYMENT_METHODS.find(m => m.id === formData.payment_method);
+  const selectedPaymentMethod = PAYMENT_METHODS.find(
+    (m) => m.id === formData.payment_method,
+  );
 
   return (
     <motion.div
@@ -257,7 +336,12 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
                 type="text"
                 required
                 value={formData.customer_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, customer_name: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    customer_name: e.target.value,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -269,7 +353,12 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
                 type="email"
                 required
                 value={formData.customer_email}
-                onChange={(e) => setFormData(prev => ({ ...prev, customer_email: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    customer_email: e.target.value,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -283,7 +372,12 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
               <input
                 type="tel"
                 value={formData.customer_phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, customer_phone: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    customer_phone: e.target.value,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -295,7 +389,12 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
                 type="text"
                 required
                 value={formData.shipping_address}
-                onChange={(e) => setFormData(prev => ({ ...prev, shipping_address: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    shipping_address: e.target.value,
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -321,7 +420,12 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
                     name="payment_method"
                     value={method.id}
                     checked={formData.payment_method === method.id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, payment_method: e.target.value as any }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        payment_method: e.target.value as any,
+                      }))
+                    }
                     className="mr-3"
                   />
                   <div>
@@ -387,7 +491,9 @@ export default function Checkout({ selectedItems, onCheckoutComplete, onCancel }
             </label>
             <textarea
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, notes: e.target.value }))
+              }
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="Any special instructions for your order..."

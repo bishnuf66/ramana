@@ -1,8 +1,10 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Blog } from "@/types/blog";
+import { Tables } from "@/types/database.types";
 import { getBlogs } from "@/lib/blog";
+
+type Blog = Tables<"blogs">;
 
 export const metadata: Metadata = {
   title: "Blog - Flower Tips & Floral Inspiration | Ramana Handmade Bouquets",
@@ -114,7 +116,7 @@ export default async function BlogPage() {
                   {/* Tags */}
                   {blog.tags && blog.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {blog.tags.map((tag) => (
+                      {blog.tags.map((tag: string) => (
                         <span
                           key={tag}
                           className="px-2 py-1 bg-pink-100 text-pink-800 text-xs font-medium rounded-full"
@@ -150,8 +152,10 @@ export default async function BlogPage() {
                           day: "numeric",
                         })}
                       </time>
-                      {blog.readingTime && (
-                        <span>{blog.readingTime} min read</span>
+                      {blog.read_min && (
+                        <span className="text-gray-600">
+                          • {blog.read_min} min read
+                        </span>
                       )}
                     </div>
                   </div>

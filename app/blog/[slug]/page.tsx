@@ -2,8 +2,10 @@ import { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Blog } from "@/types/blog";
+import { Tables } from "@/types/database.types";
 import { getBlogBySlug, getBlogs } from "@/lib/blog";
+
+type Blog = Tables<"blogs">;
 
 // Generate metadata for the blog post
 export async function generateMetadata(
@@ -244,9 +246,9 @@ export default async function BlogPostPage({
                   day: "numeric",
                 })}
               </time>
-              {blog.readingTime && (
+              {blog.read_min && (
                 <span className="text-gray-600">
-                  • {blog.readingTime} min read
+                  • {blog.read_min} min read
                 </span>
               )}
             </div>
@@ -254,7 +256,7 @@ export default async function BlogPostPage({
             {/* Tags */}
             {blog.tags && blog.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {blog.tags.map((tag) => (
+                {blog.tags.map((tag: string) => (
                   <span
                     key={tag}
                     className="px-3 py-1 bg-pink-100 text-pink-800 text-sm font-medium rounded-full"
