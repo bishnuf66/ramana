@@ -6,6 +6,7 @@ import { Search, Filter, Grid, List } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import ProductCard from "./ProductCard";
 import ProductFiltersPanel from "./ProductFiltersPanel";
+import Pagination from "../ui/Pagination";
 import { toast } from "react-toastify";
 import { useSearchParams } from "next/navigation";
 import { Tables } from "@/types/database.types";
@@ -31,14 +32,23 @@ type ProductWithRating = Product & {
   reviewCount?: number;
 };
 
+type PaginationData = {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+};
+
 interface ProductsPageClientProps {
   initialProducts: Product[];
   categories: Category[];
+  initialPagination?: PaginationData;
 }
 
 function ProductsPageInner({
   initialProducts,
   categories,
+  initialPagination,
 }: ProductsPageClientProps) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -47,10 +57,20 @@ function ProductsPageInner({
     field: "createdAt",
     direction: "desc",
   });
+
+  // Pagination state
+  const [pagination, setPagination] = useState<PaginationData>(
+    initialPagination || {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0,
+      itemsPerPage: 12,
+    },
+  );
+  const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<ProductWithRating[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Initialize with server data, then keep synced
   useEffect(() => {
@@ -354,6 +374,20 @@ function ProductsPageInner({
               </motion.div>
             )}
           </div>
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={(page) => {
+                  // This will be handled by URL navigation
+                  setPagination((prev) => ({ ...prev, currentPage: page }));
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

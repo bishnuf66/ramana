@@ -55,22 +55,43 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
-async function fetchProductsData() {
-  const { data: products } = await supabase
-    .from("products")
-    .select("*")
-    .order("created_at", { ascending: false });
+async function fetchProductsData(page: number = 1, limit: number = 12) {
+  const offset = (page - 1) * limit;
 
+  // Get paginated products
+  const { data: products, count } = await supabase
+    .from("products")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  // Get categories (no pagination needed)
   const { data: categories } = await supabase
     .from("categories")
     .select("*")
     .order("name", { ascending: true });
 
-  return { products: products || [], categories: categories || [] };
+  const totalPages = Math.ceil((count || 0) / limit);
+
+  return {
+    products: products || [],
+    categories: categories || [],
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: count || 0,
+      itemsPerPage: limit,
+    },
+  };
 }
 
-export default async function ProductsPage() {
-  const { products, categories } = await fetchProductsData();
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams?: { page?: string };
+}) {
+  const page = parseInt(searchParams?.page || "1") || 1;
+  const { products, categories, pagination } = await fetchProductsData(page);
 
   // Structured data for product collection
   const structuredData = {
@@ -94,7 +115,11 @@ export default async function ProductsPage() {
       <script type="application/ld+json">
         {JSON.stringify(structuredData)}
       </script>
-      <ProductsPageClient initialProducts={products} categories={categories} />
+      <ProductsPageClient
+        initialProducts={products}
+        categories={categories}
+        initialPagination={pagination}
+      />
     </>
   );
 }

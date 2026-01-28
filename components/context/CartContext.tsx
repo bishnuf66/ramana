@@ -40,11 +40,21 @@ interface CartContextType {
   increaseQuantity: (id: number | string) => void;
   decreaseQuantity: (id: number | string) => void;
   removeFromCart: (id: number | string) => void;
+  removeFromCartWithConfirmation: (
+    id: number | string,
+    productName: string,
+  ) => void;
   clearCart: () => void;
   getTotalPrice: () => number;
   getTotalItems: () => number;
   refreshCart: () => void; // New function to refresh cart with current data
   updateQuantity: (id: number | string, quantity: number) => void; // New function to set specific quantity
+  confirmModal: {
+    isOpen: boolean;
+    itemToRemove: number | string | null;
+    itemName: string;
+  };
+  closeConfirmModal: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -57,6 +67,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    itemToRemove: null as number | string | null,
+    itemName: "",
+  });
 
   // Track auth changes
   useEffect(() => {
@@ -341,6 +358,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     toast.success("Removed from cart");
   }, []);
 
+  const removeFromCartWithConfirmation = useCallback(
+    (id: number | string, productName: string) => {
+      setConfirmModal({
+        isOpen: true,
+        itemToRemove: id,
+        itemName: productName,
+      });
+    },
+    [],
+  );
+
+  const closeConfirmModal = useCallback(() => {
+    setConfirmModal({
+      isOpen: false,
+      itemToRemove: null,
+      itemName: "",
+    });
+  }, []);
+
   const clearCart = useCallback(() => {
     setCartReferences([]);
     setCart([]);
@@ -394,11 +430,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       increaseQuantity,
       decreaseQuantity,
       removeFromCart,
+      removeFromCartWithConfirmation,
       clearCart,
       getTotalPrice,
       getTotalItems,
       refreshCart,
       updateQuantity,
+      confirmModal,
+      closeConfirmModal,
     }),
     [
       cart,
@@ -406,11 +445,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       increaseQuantity,
       decreaseQuantity,
       removeFromCart,
+      removeFromCartWithConfirmation,
       clearCart,
       getTotalPrice,
       getTotalItems,
       refreshCart,
       updateQuantity,
+      confirmModal,
+      closeConfirmModal,
     ],
   );
 

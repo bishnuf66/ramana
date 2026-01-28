@@ -31,11 +31,21 @@ interface FavoritesContextType {
   favorites: FavoriteItem[];
   addToFavorites: (product: Product) => void;
   removeFromFavorites: (id: string) => void;
+  removeFromFavoritesWithConfirmation: (
+    id: string,
+    productName: string,
+  ) => void;
   clearFavorites: () => void;
   isFavorite: (id: string) => boolean;
   getTotalFavorites: () => number;
   toggleFavorite: (product: Product) => void;
   refreshFavorites: () => void; // New function to refresh favorites with current data
+  confirmModal: {
+    isOpen: boolean;
+    itemToRemove: string | null;
+    itemName: string;
+  };
+  closeConfirmModal: () => void;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(
@@ -50,6 +60,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [synced, setSynced] = useState(false);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    itemToRemove: null as string | null,
+    itemName: "",
+  });
 
   // Function to enrich favorite references with current product data
   const enrichFavoritesWithProductData = useCallback(
@@ -285,6 +302,25 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const removeFromFavoritesWithConfirmation = useCallback(
+    (id: string, productName: string) => {
+      setConfirmModal({
+        isOpen: true,
+        itemToRemove: id,
+        itemName: productName,
+      });
+    },
+    [],
+  );
+
+  const closeConfirmModal = useCallback(() => {
+    setConfirmModal({
+      isOpen: false,
+      itemToRemove: null,
+      itemName: "",
+    });
+  }, []);
+
   const toggleFavorite = useCallback(
     (product: Product) => {
       if (!userId) {
@@ -370,21 +406,27 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       favorites,
       addToFavorites,
       removeFromFavorites,
+      removeFromFavoritesWithConfirmation,
       clearFavorites,
       isFavorite,
       getTotalFavorites,
       toggleFavorite,
       refreshFavorites,
+      confirmModal,
+      closeConfirmModal,
     }),
     [
       favorites,
       addToFavorites,
       removeFromFavorites,
+      removeFromFavoritesWithConfirmation,
       clearFavorites,
       isFavorite,
       getTotalFavorites,
       toggleFavorite,
       refreshFavorites,
+      confirmModal,
+      closeConfirmModal,
     ],
   );
 

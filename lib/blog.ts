@@ -17,9 +17,24 @@ export async function getBlogs(
   filters?: BlogFilters,
   sort?: BlogSort,
   limit?: number,
-): Promise<Blog[]> {
+  page: number = 1,
+): Promise<{
+  blogs: Blog[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+}> {
   try {
-    let query = supabase.from("blogs").select("*").eq("published", true);
+    const itemsPerPage = limit || 12;
+    const offset = (page - 1) * itemsPerPage;
+
+    let query = supabase
+      .from("blogs")
+      .select("*", { count: "exact" })
+      .eq("published", true);
 
     // Apply filters
     if (filters?.tag) {
@@ -48,18 +63,27 @@ export async function getBlogs(
         break;
     }
 
-    if (limit) {
-      query = query.limit(limit);
-    }
+    // Apply pagination
+    query = query.range(offset, offset + itemsPerPage - 1);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       console.error("Error in getBlogs:", error);
       throw new Error("Failed to fetch blogs");
     }
 
-    return data || [];
+    const totalPages = Math.ceil((count || 0) / itemsPerPage);
+
+    return {
+      blogs: data || [],
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: count || 0,
+        itemsPerPage,
+      },
+    };
   } catch (error) {
     console.error("Error in getBlogs:", error);
     throw new Error("Failed to fetch blogs");

@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Tables } from "@/types/database.types";
 import { getBlogs } from "@/lib/blog";
+import Pagination from "@/components/ui/Pagination";
 
 type Blog = Tables<"blogs">;
 
@@ -53,8 +54,13 @@ export const metadata: Metadata = {
 // Revalidate every 24 hours
 export const revalidate = 86400;
 
-export default async function BlogPage() {
-  const blogs = await getBlogs();
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams?: { page?: string };
+}) {
+  const page = parseInt(searchParams?.page || "1") || 1;
+  const { blogs, pagination } = await getBlogs(undefined, undefined, 12, page);
 
   // Structured data for blog collection
   const structuredData = {
@@ -194,6 +200,19 @@ export default async function BlogPage() {
               <p className="text-gray-600 dark:text-gray-400">
                 Check back soon for new articles!
               </p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-12">
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={(page) => {
+                  // This will be handled by URL navigation
+                }}
+              />
             </div>
           )}
         </div>
