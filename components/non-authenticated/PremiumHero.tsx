@@ -128,7 +128,7 @@ export default function PremiumHero() {
                 transition={{ delay: 1, type: "spring", stiffness: 200 }}
                 className="absolute -bottom-6 -left-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 glass"
               >
-                <div className="text-2xl font-bold text-green-600">50%</div>
+                <div className="text-2xl font-bold text-green-600">30%</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   First Order
                 </div>
