@@ -19,6 +19,7 @@ import { Database, Tables } from "@/types/database.types";
 // Use the generated Supabase types
 type ProductReview = Tables<"product_reviews">;
 type ReviewInsert = Database["public"]["Tables"]["product_reviews"]["Insert"];
+type ReviewInteraction = Tables<"review_interactions">;
 
 // Define form-specific types
 interface ReviewFormData {
@@ -63,10 +64,40 @@ export default function ProductReviews({
   });
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
+  // Fetch user's existing interactions from database
+  const fetchUserInteractions = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: interactions, error } = await supabase
+        .from("review_interactions")
+        .select("review_id, interaction_type")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      // Convert to the format expected by userInteractions state
+      const interactionsMap: Record<string, "like" | "dislike" | null> = {};
+      interactions?.forEach((interaction) => {
+        interactionsMap[interaction.review_id] =
+          interaction.interaction_type as "like" | "dislike";
+      });
+
+      setUserInteractions(interactionsMap);
+    } catch (error) {
+      console.error("Error fetching user interactions:", error);
+    }
+  };
+
   // Fetch reviews on component mount and when dependencies change
   useEffect(() => {
     fetchReviews();
     checkUserPurchase();
+    fetchUserInteractions();
   }, [productId, filters]);
 
   // Fetch reviews function
@@ -356,13 +387,41 @@ export default function ProductReviews({
         toast.error("Please log in to like reviews");
         return;
       }
+
       const currentInteraction = userInteractions[reviewId];
       const newInteraction = currentInteraction === "like" ? null : "like";
+
       // Update user interactions state
       setUserInteractions((prev) => ({
         ...prev,
         [reviewId]: newInteraction,
       }));
+
+      // Update database
+      if (newInteraction === null) {
+        // Remove interaction
+        const { error } = await supabase
+          .from("review_interactions")
+          .delete()
+          .eq("review_id", reviewId)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        // Upsert interaction (insert or update)
+        const { error } = await supabase.from("review_interactions").upsert(
+          {
+            review_id: reviewId,
+            user_id: user.id,
+            interaction_type: newInteraction,
+          },
+          {
+            onConflict: "review_id,user_id",
+          },
+        );
+
+        if (error) throw error;
+      }
 
       // Update review counts in database
       const currentReview = reviews.find((r) => r.id === reviewId);
@@ -413,6 +472,11 @@ export default function ProductReviews({
     } catch (error) {
       console.error("Error liking review:", error);
       toast.error("Failed to like review");
+      // Revert state on error
+      setUserInteractions((prev) => ({
+        ...prev,
+        [reviewId]: userInteractions[reviewId],
+      }));
     }
   };
 
@@ -437,20 +501,37 @@ export default function ProductReviews({
         [reviewId]: newInteraction,
       }));
 
+      // Update database
+      if (newInteraction === null) {
+        // Remove interaction
+        const { error } = await supabase
+          .from("review_interactions")
+          .delete()
+          .eq("review_id", reviewId)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        // Upsert interaction (insert or update)
+        const { error } = await supabase.from("review_interactions").upsert(
+          {
+            review_id: reviewId,
+            user_id: user.id,
+            interaction_type: newInteraction,
+          },
+          {
+            onConflict: "review_id,user_id",
+          },
+        );
+
+        if (error) throw error;
+      }
+
       // Update review counts in database
       const currentReview = reviews.find((r) => r.id === reviewId);
       if (currentReview) {
         const likeCount = currentReview.like_count || 0;
         const dislikeCount = currentReview.dislike_count || 0;
-
-        console.log(
-          "Before update - Like:",
-          likeCount,
-          "Dislike:",
-          dislikeCount,
-          "Current interaction:",
-          currentInteraction,
-        );
 
         let newLikeCount = likeCount;
         let newDislikeCount = dislikeCount;
@@ -466,13 +547,6 @@ export default function ProductReviews({
           // User is adding a new dislike
           newDislikeCount = dislikeCount + 1;
         }
-
-        console.log(
-          "After update - Like:",
-          newLikeCount,
-          "Dislike:",
-          newDislikeCount,
-        );
 
         const { error } = await supabase
           .from("product_reviews")
@@ -502,6 +576,11 @@ export default function ProductReviews({
     } catch (error) {
       console.error("Error disliking review:", error);
       toast.error("Failed to dislike review");
+      // Revert state on error
+      setUserInteractions((prev) => ({
+        ...prev,
+        [reviewId]: userInteractions[reviewId],
+      }));
     }
   };
 
