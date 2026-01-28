@@ -112,7 +112,7 @@ export default function UserDashboard() {
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select("*")
-        .eq("customer_email", userProfile.email)
+        .eq("user_id", authUser.id)
         .order("created_at", { ascending: false });
 
       if (!ordersError && ordersData) {
