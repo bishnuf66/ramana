@@ -125,7 +125,9 @@ export default function Cart() {
       return;
     }
 
-    const selectedCartItems = cart.filter((item) => selectedItems.has(item.id));
+    const selectedCartItems = cart.filter((item) =>
+      selectedItems.has(item.id),
+    ) as any[];
     if (selectedCartItems.length === 0) {
       alert("Please select at least one item to checkout");
       return;

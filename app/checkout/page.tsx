@@ -30,6 +30,9 @@ export default function CheckoutPage() {
     title: item.title || "Product",
     price: item.price,
     quantity: item.quantity,
+    slug: item.slug, // Include slug for product links
+    cover_image: item.cover_image, // Include cover image
+    discount_price: item.discount_price, // Include discount price
   }));
 
   useEffect(() => {

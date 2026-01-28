@@ -8,6 +8,8 @@ export interface CheckoutItem {
   price: number;
   quantity: number;
   cover_image?: string | null;
+  slug?: string;
+  discount_price?: number;
 }
 
 interface CheckoutContextType {
