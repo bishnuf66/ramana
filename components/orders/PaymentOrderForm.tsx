@@ -269,13 +269,25 @@ export default function PaymentOrderForm({
       toast.success("Order placed successfully!");
 
       // Remove purchased items from cart
-      items.forEach((item: any) => {
-        removeFromCart(item.id);
+      console.log("Items to remove from cart:", items);
+      items.forEach((item: any, index: number) => {
+        console.log(`Item ${index}:`, item);
+        console.log(`Item ${index} ID:`, item.id);
+        console.log(`Item ${index} product_id:`, item.product_id);
+        console.log(`Item ${index} keys:`, Object.keys(item));
+
+        // Try both id and product_id to ensure removal works
+        const idToRemove = item.id || item.product_id;
+        console.log(`Removing item with ID:`, idToRemove);
+        removeFromCart(idToRemove);
       });
 
-      // Redirect to success page with order ID and items
-      const itemsData = encodeURIComponent(JSON.stringify(items));
-      window.location.href = `/order-success?orderId=${order.id}&items=${itemsData}`;
+      // Wait a moment for cart to update before redirecting
+      setTimeout(() => {
+        // Redirect to success page with order ID and items
+        const itemsData = encodeURIComponent(JSON.stringify(items));
+        window.location.href = `/order-success?orderId=${order.id}&items=${itemsData}`;
+      }, 1000);
     } catch (error) {
       console.error("Error placing order:", error);
       toast.error("Failed to place order. Please try again.");

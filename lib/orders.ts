@@ -525,7 +525,8 @@ export async function createOrder(orderData: OrderData): Promise<any> {
       customer_email: orderData.customer_email,
       customer_phone: orderData.customer_phone || undefined,
       shipping_address: orderData.shipping_address,
-      total_amount: orderData.total_amount,
+      subtotal_amount: orderData.total_amount, // Items total without discount and delivery
+      total_amount: orderTotals.totalAmount, // Final amount after discount and delivery
       discount_amount: discountAmount,
       delivery_charge: orderData.delivery_charge,
       remaining_amount: orderTotals.remainingAmount || null,
