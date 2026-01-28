@@ -76,10 +76,10 @@ export const metadata: Metadata = {
     creator: "@ramana_handmade",
     site: "@ramana_handmade",
   },
-  verification: {
-    google: "your-google-verification-code",
-    yandex: "your-yandex-verification-code",
-  },
+  // verification: {
+  //   google: "your-google-verification-code",
+  //   yandex: "your-yandex-verification-code",
+  // },
   alternates: {
     canonical: "https://ramana.com.np",
     languages: {
