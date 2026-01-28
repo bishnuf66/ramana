@@ -27,6 +27,7 @@ import Image from "next/image";
 import { useCart } from "@/components/context/CartContext";
 import { useFavorites } from "@/components/context/FavoritesContext";
 import ProfileSetting from "@/components/dashboard/ProfileSetting";
+import OrdersTab from "@/components/dashboard/OrdersTab";
 import {
   requestOrderCancellation,
   withdrawCancellationRequest,
@@ -550,118 +551,12 @@ export default function UserDashboard() {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
                   My Orders
                 </h3>
-                {orders.length === 0 ? (
-                  <div className="text-center py-12">
-                    <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      No Orders Yet
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      Start shopping to see your orders here
-                    </p>
-                    <button
-                      onClick={() => router.push("/products")}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      Browse Products
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {orders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h4 className="font-medium text-gray-900 dark:text-white">
-                              Order #{order.id.slice(0, 8)}
-                            </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {new Date(order.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              Rs {order.total_amount.toFixed(2)}
-                            </p>
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full ${
-                                order.status === "delivered"
-                                  ? "bg-green-100 text-green-800"
-                                  : order.status === "shipped"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : order.status === "processing"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : order.status === "cancelled"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {order.status}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          <p>
-                            <strong>Shipping Address:</strong>{" "}
-                            {order.shipping_address}
-                          </p>
-                          <p>
-                            <strong>Items:</strong>{" "}
-                            {JSON.stringify(order.items).length} items
-                          </p>
-                        </div>
-
-                        {/* Cancellation Status and Actions */}
-                        {order.cancellation_request && (
-                          <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                                  Cancellation Requested
-                                </p>
-                                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                                  Reason: {order.cancellation_reason}
-                                </p>
-                                {order.cancellation_requested_at && (
-                                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                                    Requested:{" "}
-                                    {new Date(
-                                      order.cancellation_requested_at,
-                                    ).toLocaleDateString()}
-                                  </p>
-                                )}
-                              </div>
-                              <button
-                                onClick={() =>
-                                  handleWithdrawCancellation(order.id)
-                                }
-                                className="px-3 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors"
-                              >
-                                Withdraw Request
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Cancellation Button */}
-                        {canCancelOrder(order) && (
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={() => openCancellationModal(order.id)}
-                              className="flex items-center gap-2 px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                            >
-                              <XCircle className="w-4 h-4" />
-                              Request Cancellation
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <OrdersTab
+                  orders={orders}
+                  canCancelOrder={canCancelOrder}
+                  openCancellationModal={openCancellationModal}
+                  handleWithdrawCancellation={handleWithdrawCancellation}
+                />
               </motion.div>
             )}
 
