@@ -14,12 +14,13 @@ import {
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
-import { Tables } from "@/types/database.types";
+import { Database, Tables } from "@/types/database.types";
 
 // Use the generated Supabase types
 type ProductReview = Tables<"product_reviews">;
+type ReviewInsert = Database["public"]["Tables"]["product_reviews"]["Insert"];
 
-// Define the missing types locally
+// Define form-specific types
 interface ReviewFormData {
   rating: number;
   comment: string;
@@ -51,6 +52,8 @@ export default function ProductReviews({
   const [userInteractions, setUserInteractions] = useState<
     Record<string, "like" | "dislike" | null>
   >({});
+  const [userHasPurchased, setUserHasPurchased] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(false);
 
   // Review form state
   const [reviewForm, setReviewForm] = useState<ReviewFormData>({
@@ -63,6 +66,7 @@ export default function ProductReviews({
   // Fetch reviews on component mount and when dependencies change
   useEffect(() => {
     fetchReviews();
+    checkUserPurchase();
   }, [productId, filters]);
 
   // Fetch reviews function
@@ -131,6 +135,56 @@ export default function ProductReviews({
     }
   };
 
+  // Check if user has purchased this product with delivered status
+  const checkUserPurchase = async () => {
+    try {
+      setCheckingPurchase(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setUserHasPurchased(false);
+        return;
+      }
+
+      const { data: orders, error: orderError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("order_status", "delivered");
+
+      if (orderError) {
+        console.error("Error checking orders:", orderError);
+        setUserHasPurchased(false);
+        return;
+      }
+
+      // Check if any delivered order contains this product
+      let hasPurchased = false;
+      for (const order of orders || []) {
+        if (order.items && Array.isArray(order.items)) {
+          const orderItems = Array.isArray(order.items) ? order.items : [];
+          const productInOrder = orderItems.some(
+            (item: any) =>
+              item.id === productId || item.product_id === productId,
+          );
+          if (productInOrder) {
+            hasPurchased = true;
+            break;
+          }
+        }
+      }
+
+      setUserHasPurchased(hasPurchased);
+    } catch (error) {
+      console.error("Error checking purchase:", error);
+      setUserHasPurchased(false);
+    } finally {
+      setCheckingPurchase(false);
+    }
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
@@ -139,7 +193,7 @@ export default function ProductReviews({
       return;
     }
 
-    const validFiles = files.filter((file) => {
+    const validFiles = files.filter((file: File) => {
       const isValidType = file.type.startsWith("image/");
       const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
       return isValidType && isValidSize;
@@ -155,7 +209,7 @@ export default function ProductReviews({
     }));
 
     // Create previews
-    validFiles.forEach((file) => {
+    validFiles.forEach((file: File) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviews((prev) => [...prev, reader.result as string]);
@@ -191,7 +245,7 @@ export default function ProductReviews({
         .from("orders")
         .select("*")
         .eq("user_id", user.id)
-        .eq("status", "delivered");
+        .eq("order_status", "delivered");
 
       if (orderError) {
         console.error("Error checking orders:", orderError);
@@ -260,8 +314,8 @@ export default function ProductReviews({
         }
       }
 
-      const reviewData = {
-        product_id: productId, // Now guaranteed to be a valid UUID
+      const reviewData: ReviewInsert = {
+        product_id: productId,
         user_id: user.id,
         user_name:
           user.user_metadata?.full_name ||
@@ -269,9 +323,8 @@ export default function ProductReviews({
           "Anonymous",
         user_email: user.email || "",
         rating: reviewForm.rating,
-        comment: reviewForm.comment,
-        review_images: uploadedImageUrls,
-        is_verified: false,
+        comment: reviewForm.comment || null,
+        review_images: uploadedImageUrls.length > 0 ? uploadedImageUrls : null,
       };
 
       const { error } = await supabase
@@ -543,7 +596,7 @@ export default function ProductReviews({
       </div>
 
       {/* Write Review Button */}
-      {!userReview && (
+      {!userReview && userHasPurchased && (
         <div className="text-center">
           <button
             onClick={() => setShowReviewForm(true)}
@@ -551,6 +604,15 @@ export default function ProductReviews({
           >
             Write a Review
           </button>
+        </div>
+      )}
+
+      {/* Message for users who haven't purchased */}
+      {!userHasPurchased && !checkingPurchase && (
+        <div className="text-center py-4">
+          <p className="text-gray-600 dark:text-gray-400">
+            Only customers who have received this product can write reviews
+          </p>
         </div>
       )}
 
