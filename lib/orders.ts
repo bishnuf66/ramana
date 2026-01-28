@@ -4,6 +4,9 @@ import { Tables } from "@/types/database.types";
 
 // Coupon type based on generated database types
 export type Coupon = Tables<"coupons">;
+export type Order = Tables<"orders">;
+export type UserPayment = Tables<"user_payments">;
+export type PaymentOption = Tables<"payment_options">;
 
 export interface OrderData {
   customer_name: string;
@@ -457,10 +460,15 @@ export function calculateDiscount(
 
 export async function createOrder(orderData: OrderData): Promise<any> {
   try {
+    console.log("=== CREATE ORDER STARTED ===");
+    console.log("Order data received:", orderData);
+
     // Get current user
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
+    console.log("Authenticated user:", user?.id || "No user");
 
     // Validate coupon if provided
     let couponValidation = null;
@@ -508,30 +516,38 @@ export async function createOrder(orderData: OrderData): Promise<any> {
         : undefined,
     );
 
-    // Prepare order data using simplified schema
+    console.log("Order totals calculated:", orderTotals);
+
+    // Prepare order data using generated types
     const orderPayload = {
-      user_id: user?.id || null,
+      user_id: user?.id || "", // Required field, use empty string if no user
       customer_name: orderData.customer_name,
       customer_email: orderData.customer_email,
-      customer_phone: orderData.customer_phone || null,
+      customer_phone: orderData.customer_phone || undefined,
       shipping_address: orderData.shipping_address,
       total_amount: orderData.total_amount,
       discount_amount: discountAmount,
       delivery_charge: orderData.delivery_charge,
-      partial_payment_amount: orderTotals.partialPaymentAmount || null,
       remaining_amount: orderTotals.remainingAmount || null,
       coupon_code: orderData.coupon_code?.toUpperCase() || null,
       coupon_discount_percentage:
         (discountAmount / orderData.total_amount) * 100 || null,
-      payment_method: orderData.payment_method,
-      payment_type: orderData.payment_type,
-      partial_payment_percentage: orderData.partial_payment_percentage || 50,
-      payment_screenshot: paymentScreenshotUrl,
       items: orderData.items,
       notes: orderData.notes || null,
+      // Set default values for required fields
+      order_status: "pending",
+      payment_status:
+        orderData.payment_type === "full" ? "paid" : "partially_paid",
+      cancellation_request: null,
+      cancellation_requested_at: null,
+      cancellation_reason: null,
+      return_request: null,
+      return_requested_at: null,
+      return_reason: null,
     };
 
     // Create order
+    console.log("Creating order with payload:", orderPayload);
     const { data: order, error } = await supabase
       .from("orders")
       .insert(orderPayload)
@@ -539,7 +555,69 @@ export async function createOrder(orderData: OrderData): Promise<any> {
       .single();
 
     if (error) {
+      console.error("Order creation failed:", error);
       throw error;
+    }
+
+    console.log("Order created successfully:", order.id);
+
+    // Create payment record in user_payments table
+    console.log("Creating payment record with payload:", {
+      order_id: order.id,
+      user_id: user?.id || null,
+      payment_option_id: orderData.payment_method, // Now this is the UUID directly
+      payment_type: orderData.payment_type,
+      paid_amount: orderTotals.partialPaymentAmount || orderTotals.totalAmount,
+      remaining_amount: orderTotals.remainingAmount || 0,
+      paid_amount_percentage:
+        orderData.payment_type === "partial"
+          ? orderData.partial_payment_percentage || 50
+          : 100,
+      payment_screenshot: paymentScreenshotUrl || "",
+      is_verified: false,
+    });
+
+    const { data: payment, error: paymentError } = await supabase
+      .from("user_payments")
+      .insert({
+        order_id: order.id,
+        user_id: user?.id || null,
+        payment_option_id: orderData.payment_method, // Now this is the UUID directly
+        payment_type: orderData.payment_type,
+        paid_amount:
+          orderTotals.partialPaymentAmount || orderTotals.totalAmount,
+        remaining_amount: orderTotals.remainingAmount || 0,
+        paid_amount_percentage:
+          orderData.payment_type === "partial"
+            ? orderData.partial_payment_percentage || 50
+            : 100,
+        payment_screenshot: paymentScreenshotUrl || "",
+        is_verified: false, // Will be verified by admin
+      })
+      .select()
+      .single();
+
+    if (paymentError) {
+      console.error("Error creating payment record:", paymentError);
+      console.error("Payment payload that failed:", {
+        order_id: order.id,
+        user_id: user?.id || null,
+        payment_option_id: orderData.payment_method,
+        payment_type: orderData.payment_type,
+        paid_amount:
+          orderTotals.partialPaymentAmount || orderTotals.totalAmount,
+        remaining_amount: orderTotals.remainingAmount || 0,
+        paid_amount_percentage:
+          orderData.payment_type === "partial"
+            ? orderData.partial_payment_percentage || 50
+            : 100,
+        payment_screenshot: paymentScreenshotUrl || "",
+        is_verified: false,
+      });
+      // Don't throw error here, order is already created
+      // But log the error for debugging
+    } else {
+      console.log("Payment record created successfully:", payment);
     }
 
     // Apply coupon usage if coupon was used

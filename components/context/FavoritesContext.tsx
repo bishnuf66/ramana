@@ -144,8 +144,6 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error("Favorites persist error:", error);
         toast.error("Failed to save favorites to database");
-      } else {
-        console.log("Favorites successfully persisted to database");
       }
     }, 500);
 

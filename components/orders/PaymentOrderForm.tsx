@@ -57,7 +57,7 @@ export default function PaymentOrderForm({
     shipping_address: "",
     items: items,
     total_amount: totalAmount,
-    payment_method: "esewa",
+    payment_method: "", // Will be set to UUID when payment options are loaded
     payment_type: "full",
     partial_payment_percentage: 50,
     notes: "",
@@ -105,10 +105,10 @@ export default function PaymentOrderForm({
 
       // Set default payment method to first available option
       if (data && data.length > 0) {
-        setPaymentMethod(data[0].payment_number);
+        setPaymentMethod(data[0].id); // Use UUID instead of payment_number
         setFormData((prev) => ({
           ...prev,
-          payment_method: data[0].payment_number,
+          payment_method: data[0].id, // Use UUID instead of payment_number
         }));
       }
     } catch (error) {
@@ -278,10 +278,10 @@ export default function PaymentOrderForm({
     }
   };
 
-  const getQRCodeUrl = (paymentType: string) => {
+  const getQRCodeUrl = (paymentMethodId: string) => {
     // Return QR code URL from payment_options table
     const payment = paymentOptions.find(
-      (p) => p.payment_number === paymentType,
+      (p) => p.id === paymentMethodId, // Use UUID instead of payment_number
     );
     return payment?.qr_image_url || "";
   };
@@ -513,7 +513,7 @@ export default function PaymentOrderForm({
               <label
                 key={option.id}
                 className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                  paymentMethod === option.payment_number
+                  paymentMethod === option.id
                     ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                     : "border-gray-300 dark:border-gray-600"
                 }`}
@@ -521,8 +521,8 @@ export default function PaymentOrderForm({
                 <input
                   type="radio"
                   name="payment_method"
-                  value={option.payment_number}
-                  checked={paymentMethod === option.payment_number}
+                  value={option.id} // Use UUID instead of payment_number
+                  checked={paymentMethod === option.id}
                   onChange={(e) => {
                     setPaymentMethod(e.target.value);
                     setFormData((prev) => ({
@@ -657,7 +657,7 @@ export default function PaymentOrderForm({
         {/* QR Code Display */}
         {(() => {
           const selectedPayment = paymentOptions.find(
-            (option) => option.payment_number === paymentMethod,
+            (option) => option.id === paymentMethod, // Use UUID instead of payment_number
           );
           return selectedPayment?.qr_image_url ? (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -731,9 +731,7 @@ export default function PaymentOrderForm({
         </div>
 
         {/* Payment Screenshot Upload */}
-        {paymentOptions.find(
-          (option) => option.payment_number === paymentMethod,
-        ) && (
+        {paymentOptions.find((option) => option.id === paymentMethod) && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Payment Screenshot *
