@@ -11,8 +11,11 @@ export default function PaymentPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = params.orderId as string;
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const paymentType = searchParams?.get('type') || 'remaining';
+  const searchParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
+  const paymentType = searchParams?.get("type") || "remaining";
 
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -55,7 +58,7 @@ export default function PaymentPage() {
 
       if (error) throw error;
       setPaymentOptions(data || []);
-      
+
       // Set default payment method
       if (data && data.length > 0) {
         setPaymentMethod(data[0].id);
@@ -66,7 +69,9 @@ export default function PaymentPage() {
     }
   };
 
-  const handlePaymentScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePaymentScreenshotChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       setPaymentScreenshot(file);
@@ -79,23 +84,27 @@ export default function PaymentPage() {
   };
 
   const uploadPaymentScreenshot = async (file: File): Promise<string> => {
-    const fileName = `payment-${orderId}-${Date.now()}`;
+    // Use the same bucket as checkout page (product-images)
+    const fileName = `payment-screenshots/payment-${orderId}-${Date.now()}-${file.name}`;
     const { data, error } = await supabase.storage
-      .from("payment-screenshots")
-      .upload(fileName, file);
+      .from("product-images")
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
 
     if (error) throw error;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("payment-screenshots")
-      .getPublicUrl(fileName);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("product-images").getPublicUrl(fileName);
 
     return publicUrl;
   };
 
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!paymentMethod) {
       toast.error("Please select a payment method");
       return;
@@ -156,7 +165,9 @@ export default function PaymentPage() {
         <div className="max-w-2xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading order details...</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Loading order details...
+            </p>
           </div>
         </div>
       </div>
@@ -226,7 +237,10 @@ export default function PaymentPage() {
                   Already Paid:
                 </span>
                 <span className="font-medium text-green-600">
-                  Rs {(order.total_amount - (order.remaining_amount || 0)).toFixed(2)}
+                  Rs{" "}
+                  {(order.total_amount - (order.remaining_amount || 0)).toFixed(
+                    2,
+                  )}
                 </span>
               </div>
               <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
@@ -358,7 +372,9 @@ export default function PaymentPage() {
               disabled={processing}
               className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {processing ? "Processing..." : `Pay Rs ${order.remaining_amount?.toFixed(2)}`}
+              {processing
+                ? "Processing..."
+                : `Pay Rs ${order.remaining_amount?.toFixed(2)}`}
             </button>
           </form>
         </motion.div>
