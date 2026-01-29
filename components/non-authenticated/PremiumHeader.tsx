@@ -11,6 +11,7 @@ import { useFavorites } from "../context/FavoritesContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { signOut } from "@/lib/supabase/auth";
 import { supabase } from "@/lib/supabase/client";
+import { Tables } from "../../types/database.types";
 import Logo from "../global/Logo";
 import ThemeToggle from "../global/ThemeToggle";
 import LoginModal from "./LoginModal";
@@ -30,6 +31,8 @@ export default function PremiumHeader() {
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [categories, setCategories] = useState<Tables<"categories">[]>([]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -59,7 +62,17 @@ export default function PremiumHeader() {
       }
     };
 
+    // Fetch categories
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("*")
+        .order("name", { ascending: true });
+      setCategories(data || []);
+    };
+
     checkUser();
+    fetchCategories();
 
     // Listen for auth changes
     const {
@@ -157,20 +170,55 @@ export default function PremiumHeader() {
                 Blog
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 dark:bg-green-400 group-hover:w-full transition-all duration-300" />
               </Link>
-              <Link
-                href="/about"
-                className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium transition-colors relative group"
-              >
-                About
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 dark:bg-green-400 group-hover:w-full transition-all duration-300" />
-              </Link>
-              <Link
-                href="/contact"
-                className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium transition-colors relative group"
-              >
-                Contact
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 dark:bg-green-400 group-hover:w-full transition-all duration-300" />
-              </Link>
+
+              {/* Categories Dropdown */}
+              <div className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() =>
+                    setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
+                  }
+                  className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium transition-colors relative group"
+                >
+                  Categories
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${isCategoryDropdownOpen ? "rotate-180" : ""}`}
+                  />
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 dark:bg-green-400 group-hover:w-full transition-all duration-300" />
+                </motion.button>
+
+                <AnimatePresence>
+                  {isCategoryDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50"
+                    >
+                      <div className="py-2">
+                        <Link
+                          href="/products"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={() => setIsCategoryDropdownOpen(false)}
+                        >
+                          All Products
+                        </Link>
+                        {categories.map((category) => (
+                          <Link
+                            key={category.id}
+                            href={`/products?category=${category.slug}`}
+                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            onClick={() => setIsCategoryDropdownOpen(false)}
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Search Bar */}
               <div className="flex-1 max-w-md">
@@ -365,20 +413,32 @@ export default function PremiumHeader() {
                 >
                   Blog
                 </Link>
-                <Link
-                  href="/about"
-                  className="block text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className="block text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 font-medium py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Contact
-                </Link>
+
+                {/* Mobile Categories */}
+                <div className="py-2 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Categories
+                  </h4>
+                  <div className="space-y-1">
+                    <Link
+                      href="/products"
+                      className="block px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      All Products
+                    </Link>
+                    {categories.map((category) => (
+                      <Link
+                        key={category.id}
+                        href={`/products?category=${category.slug}`}
+                        className="block px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-gray-800 rounded transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Mobile Profile/Login */}
                 {user ? (

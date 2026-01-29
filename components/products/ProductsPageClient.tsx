@@ -43,13 +43,11 @@ type PaginationData = {
 
 interface ProductsPageClientProps {
   initialProducts: Product[];
-  categories: Category[];
   initialPagination?: PaginationData;
 }
 
 function ProductsPageInner({
   initialProducts,
-  categories,
   initialPagination,
 }: ProductsPageClientProps) {
   const searchParams = useSearchParams();
@@ -327,7 +325,6 @@ function ProductsPageInner({
               <ProductFiltersPanel
                 filters={filters}
                 onFiltersChange={setFilters}
-                categories={categories}
               />
             </motion.div>
           )}

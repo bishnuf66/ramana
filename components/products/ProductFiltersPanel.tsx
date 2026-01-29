@@ -2,7 +2,9 @@
 
 import { motion } from "framer-motion";
 import { X, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Tables } from "../../types/database.types";
+import { supabase } from "@/lib/supabase/client";
 
 // Use the generated Supabase types
 type Product = Tables<"products">;
@@ -19,14 +21,25 @@ type ProductFilters = {
 interface ProductFiltersPanelProps {
   filters: ProductFilters;
   onFiltersChange: (filters: ProductFilters) => void;
-  categories: Category[];
 }
 
 export default function ProductFiltersPanel({
   filters,
   onFiltersChange,
-  categories,
 }: ProductFiltersPanelProps) {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("*")
+        .order("name", { ascending: true });
+      setCategories(data || []);
+    };
+
+    fetchCategories();
+  }, []);
   const updateFilter = (key: keyof ProductFilters, value: any) => {
     onFiltersChange({
       ...filters,
@@ -76,7 +89,7 @@ export default function ProductFiltersPanel({
               className="mr-2 text-green-500 focus:ring-green-500"
             />
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              All Categories
+              All
             </span>
           </label>
           {categories.map((category) => (

@@ -118,7 +118,6 @@ export default async function ProductsPage({
       </script>
       <ProductsPageClient
         initialProducts={products}
-        categories={categories}
         initialPagination={pagination}
       />
     </>
