@@ -11,7 +11,7 @@ import { useFavorites } from "../context/FavoritesContext";
 import { useAuthModal } from "../context/AuthModalContext";
 import { signOut } from "@/lib/supabase/auth";
 import { supabase } from "@/lib/supabase/client";
-import { Tables } from "../../types/database.types";
+import { useCategories } from "../../hooks/useCategories";
 import Logo from "../global/Logo";
 import ThemeToggle from "../global/ThemeToggle";
 import LoginModal from "./LoginModal";
@@ -32,7 +32,8 @@ export default function PremiumHeader() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [categories, setCategories] = useState<Tables<"categories">[]>([]);
+  const { data: categoriesData } = useCategories();
+  const categories = categoriesData?.categories || [];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,17 +63,7 @@ export default function PremiumHeader() {
       }
     };
 
-    // Fetch categories
-    const fetchCategories = async () => {
-      const { data } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name", { ascending: true });
-      setCategories(data || []);
-    };
-
     checkUser();
-    fetchCategories();
 
     // Listen for auth changes
     const {

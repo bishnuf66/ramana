@@ -2,9 +2,8 @@
 
 import { motion } from "framer-motion";
 import { X, Star } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Tables } from "../../types/database.types";
-import { supabase } from "@/lib/supabase/client";
+import { useCategories } from "../../hooks/useCategories";
 
 // Use the generated Supabase types
 type Product = Tables<"products">;
@@ -27,19 +26,8 @@ export default function ProductFiltersPanel({
   filters,
   onFiltersChange,
 }: ProductFiltersPanelProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const { data } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name", { ascending: true });
-      setCategories(data || []);
-    };
-
-    fetchCategories();
-  }, []);
+  const { data: categoriesData, isLoading, error } = useCategories();
+  const categories = categoriesData?.categories || [];
   const updateFilter = (key: keyof ProductFilters, value: any) => {
     onFiltersChange({
       ...filters,
@@ -80,32 +68,44 @@ export default function ProductFiltersPanel({
           Category
         </h4>
         <div className="space-y-2">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="category"
-              checked={!filters.category_id}
-              onChange={() => updateFilter("category_id", undefined)}
-              className="mr-2 text-green-500 focus:ring-green-500"
-            />
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              All
-            </span>
-          </label>
-          {categories.map((category) => (
-            <label key={category.id} className="flex items-center">
-              <input
-                type="radio"
-                name="category"
-                checked={filters.category_id === category.id}
-                onChange={() => updateFilter("category_id", category.id)}
-                className="mr-2 text-green-500 focus:ring-green-500"
-              />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {category.name}
-              </span>
-            </label>
-          ))}
+          {isLoading ? (
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Loading categories...
+            </div>
+          ) : error ? (
+            <div className="text-sm text-red-500">
+              Failed to load categories
+            </div>
+          ) : (
+            <>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="category"
+                  checked={!filters.category_id}
+                  onChange={() => updateFilter("category_id", undefined)}
+                  className="mr-2 text-green-500 focus:ring-green-500"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  All
+                </span>
+              </label>
+              {categories.map((category) => (
+                <label key={category.id} className="flex items-center">
+                  <input
+                    type="radio"
+                    name="category"
+                    checked={filters.category_id === category.id}
+                    onChange={() => updateFilter("category_id", category.id)}
+                    className="mr-2 text-green-500 focus:ring-green-500"
+                  />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {category.name}
+                  </span>
+                </label>
+              ))}
+            </>
+          )}
         </div>
       </div>
 
