@@ -259,9 +259,12 @@ Thank you! 🌸`;
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                 Description
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {product.description || "No description available."}
-              </p>
+              <div
+                className="text-gray-600 dark:text-gray-400 leading-relaxed prose prose-sm max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{
+                  __html: product.description || "No description available.",
+                }}
+              />
             </div>
 
             {/* Quantity & Add to Cart */}

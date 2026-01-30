@@ -838,7 +838,9 @@ export default function ProductReviews({
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <User className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <h3 className="text-lg font-semibold mb-2">No Reviews Yet</h3>
-            <p>Be the first to review this product!</p>
+            {!userReview && userHasPurchased && (
+              <p>Be the first to review this product!</p>
+            )}
           </div>
         ) : (
           reviews.map((review) => (
