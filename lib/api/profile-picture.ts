@@ -17,6 +17,9 @@ export async function uploadProfilePicture(
       throw new Error("Profile picture must be less than 2MB");
     }
 
+    // Delete old profile picture first
+    await deleteProfilePicture(userId);
+
     // Generate unique filename with direct user_id folder
     const fileName = `${userId}/${Date.now()}-${file.name}`;
 
@@ -25,7 +28,7 @@ export async function uploadProfilePicture(
       .from("profile-pictures")
       .upload(fileName, file, {
         cacheControl: "3600",
-        upsert: true, // Allow overwriting previous profile picture
+        upsert: false, // Don't allow upsert since we're using unique names
       });
 
     if (uploadError) {
@@ -72,11 +75,18 @@ export async function deleteProfilePicture(userId: string): Promise<boolean> {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user || !user.user_metadata?.profile_picture_path) {
-      throw new Error("No profile picture found to delete");
+    if (!user) {
+      console.log("No user found for deleteProfilePicture");
+      return true; // Nothing to delete
     }
 
-    const filePath = user.user_metadata.profile_picture_path;
+    const filePath = user.user_metadata?.profile_picture_path;
+
+    // If no profile picture path, nothing to delete
+    if (!filePath) {
+      console.log("No profile picture path found in metadata");
+      return true; // Nothing to delete
+    }
 
     // Delete the file from storage
     const { error } = await supabase.storage
@@ -85,7 +95,9 @@ export async function deleteProfilePicture(userId: string): Promise<boolean> {
 
     if (error) {
       console.error("Error deleting profile picture:", error);
-      throw error;
+      // Don't throw error, just log it and continue to clear metadata
+    } else {
+      console.log("Profile picture deleted from storage:", filePath);
     }
 
     // Update user metadata to remove profile picture
@@ -100,7 +112,7 @@ export async function deleteProfilePicture(userId: string): Promise<boolean> {
       console.error("Error updating user metadata:", updateError);
       // Don't throw error, just log it since deletion was successful
     } else {
-      console.log("Profile picture deleted successfully");
+      console.log("Profile picture metadata cleared successfully");
     }
 
     return true;

@@ -14,8 +14,13 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
 import ProfilePictureUpload from "./ProfilePictureUpload";
+import ProfilePictureEdit from "./ProfilePictureEdit";
 import { useCurrentUserProfilePicture } from "@/hooks/useProfilePicture";
-import { clearOldProfilePictureMetadata } from "@/lib/api/profile-picture";
+import {
+  clearOldProfilePictureMetadata,
+  uploadProfilePicture,
+  deleteProfilePicture,
+} from "@/lib/api/profile-picture";
 
 interface UserProfile {
   id: string;
@@ -57,6 +62,17 @@ export default function ProfileSetting({
     finalProfilePictureUrl: profilePictureUrl,
   });
 
+  // State for temporary profile picture changes
+  const [tempProfilePicture, setTempProfilePicture] = useState<{
+    file: File | null;
+    preview: string | null;
+    deleted: boolean;
+  }>({
+    file: null,
+    preview: null,
+    deleted: false,
+  });
+
   const [profileForm, setProfileForm] = useState({
     full_name: user.full_name || "",
     phone: user.phone || "",
@@ -77,6 +93,39 @@ export default function ProfileSetting({
     clearOldProfilePictureMetadata();
   }, []);
 
+  // Handlers for temporary profile picture changes
+  const handleTempPictureUpload = (file: File) => {
+    const preview = URL.createObjectURL(file);
+    setTempProfilePicture({
+      file,
+      preview,
+      deleted: false,
+    });
+  };
+
+  const handleTempPictureDelete = () => {
+    setTempProfilePicture({
+      file: null,
+      preview: null,
+      deleted: true,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    // Reset temporary changes
+    setTempProfilePicture({
+      file: null,
+      preview: null,
+      deleted: false,
+    });
+    setProfileForm({
+      full_name: user.full_name || "",
+      phone: user.phone || "",
+      address: user.address || "",
+    });
+    setEditingProfile(false);
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -85,6 +134,23 @@ export default function ProfileSetting({
         data: { user: authUser },
       } = await supabase.auth.getUser();
       if (!authUser) return;
+
+      // Handle profile picture changes
+      if (tempProfilePicture.deleted) {
+        // Delete profile picture
+        try {
+          await deleteProfilePicture(user.id);
+        } catch (error) {
+          console.error("Error deleting profile picture:", error);
+        }
+      } else if (tempProfilePicture.file) {
+        // Upload new profile picture
+        try {
+          await uploadProfilePicture(tempProfilePicture.file, user.id);
+        } catch (error) {
+          console.error("Error uploading profile picture:", error);
+        }
+      }
 
       // Update auth metadata directly
       const { error } = await supabase.auth.updateUser({
@@ -100,6 +166,13 @@ export default function ProfileSetting({
 
       toast.success("Profile updated successfully!");
       setEditingProfile(false);
+
+      // Reset temporary state
+      setTempProfilePicture({
+        file: null,
+        preview: null,
+        deleted: false,
+      });
 
       // Force refresh by waiting a moment then reloading
       setTimeout(() => {
@@ -195,9 +268,6 @@ export default function ProfileSetting({
 
       {/* Profile Picture Section */}
       <div className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-700">
-        <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
-          Profile Picture
-        </h4>
         <div className="flex items-center gap-6">
           <ProfilePictureUpload
             userId={user.id}
@@ -215,22 +285,13 @@ export default function ProfileSetting({
               Upload a profile picture to personalize your account. Supported
               formats: JPG, PNG, GIF. Maximum size: 2MB.
             </p>
-            {(user.profile_picture_url || user.avatar_url) && (
-              <p className="text-sm text-green-600 dark:text-green-400">
-                ✓ Profile picture uploaded successfully
-              </p>
-            )}
+
             {!(user.profile_picture_url || user.avatar_url) &&
               !profilePictureLoading && (
                 <p className="text-sm text-gray-500 dark:text-gray-500">
                   No profile picture set. Click the camera icon to upload one.
                 </p>
               )}
-            {!editingProfile && (
-              <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
-                💡 Click "Edit Profile" to upload or change your profile picture
-              </p>
-            )}
           </div>
         </div>
       </div>
