@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
+import ProfilePictureUpload from "./ProfilePictureUpload";
+import { useCurrentUserProfilePicture } from "@/hooks/useProfilePicture";
 
 interface UserProfile {
   id: string;
@@ -21,6 +23,7 @@ interface UserProfile {
   phone?: string;
   address?: string;
   avatar_url?: string;
+  profile_picture_url?: string;
   created_at: string;
 }
 
@@ -36,6 +39,15 @@ export default function ProfileSetting({
   const [editingProfile, setEditingProfile] = useState(false);
   const [changingEmail, setChangingEmail] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const {
+    profilePictureUrl: hookProfilePictureUrl,
+    loading: profilePictureLoading,
+  } = useCurrentUserProfilePicture();
+
+  // Use profile picture from user prop first, then fallback to hook
+  const profilePictureUrl =
+    user.profile_picture_url || user.avatar_url || hookProfilePictureUrl;
+
   const [profileForm, setProfileForm] = useState({
     full_name: user.full_name || "",
     phone: user.phone || "",
@@ -164,6 +176,47 @@ export default function ProfileSetting({
             <Edit className="w-4 h-4" />
             {editingProfile ? "Cancel" : "Edit Profile"}
           </button>
+        </div>
+      </div>
+
+      {/* Profile Picture Section */}
+      <div className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-700">
+        <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
+          Profile Picture
+        </h4>
+        <div className="flex items-center gap-6">
+          <ProfilePictureUpload
+            userId={user.id}
+            size="lg"
+            showUploadButton={true}
+            editable={editingProfile}
+            currentProfilePictureUrl={
+              user.profile_picture_url || user.avatar_url
+            }
+            className="flex-shrink-0"
+          />
+          <div className="flex-1">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Upload a profile picture to personalize your account. Supported
+              formats: JPG, PNG, GIF. Maximum size: 2MB.
+            </p>
+            {(user.profile_picture_url || user.avatar_url) && (
+              <p className="text-sm text-green-600 dark:text-green-400">
+                ✓ Profile picture uploaded successfully
+              </p>
+            )}
+            {!(user.profile_picture_url || user.avatar_url) &&
+              !profilePictureLoading && (
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  No profile picture set. Click the camera icon to upload one.
+                </p>
+              )}
+            {!editingProfile && (
+              <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
+                💡 Click "Edit Profile" to upload or change your profile picture
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

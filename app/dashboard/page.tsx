@@ -43,6 +43,7 @@ interface UserProfile {
   phone?: string;
   address?: string;
   avatar_url?: string;
+  profile_picture_url?: string;
   created_at: string;
 }
 
@@ -103,6 +104,7 @@ export default function UserDashboard() {
         phone: authUser.user_metadata?.phone || "",
         address: authUser.user_metadata?.address || "",
         avatar_url: authUser.user_metadata?.avatar_url || "",
+        profile_picture_url: authUser.user_metadata?.profile_picture_url || "",
         created_at: authUser.created_at || new Date().toISOString(),
       };
 
@@ -377,17 +379,26 @@ export default function UserDashboard() {
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
               {/* User Info */}
               <div className="text-center mb-6">
-                <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  {user.avatar_url ? (
+                <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                  {user.profile_picture_url || user.avatar_url ? (
                     <Image
-                      src={user.avatar_url}
+                      src={user.profile_picture_url || user.avatar_url || ""}
                       alt="Profile"
                       width={80}
                       height={80}
-                      className="rounded-full"
+                      className="rounded-full object-cover"
+                      onError={(e) => {
+                        // Fallback to default avatar if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        if (target.parentElement) {
+                          target.parentElement.innerHTML =
+                            '<div class="w-full h-full flex items-center justify-center"><svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>';
+                        }
+                      }}
                     />
                   ) : (
-                    <User className="w-10 h-10 text-gray-500" />
+                    <User className="w-8 h-8 text-gray-400" />
                   )}
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

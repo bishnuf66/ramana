@@ -2,6 +2,7 @@
 
 import { supabase } from "./client";
 import { toast } from "react-toastify";
+import { setGoogleProfilePicture } from "@/lib/api/profile-picture";
 
 // Google OAuth Sign In
 export const signInWithGoogle = async () => {
@@ -10,6 +11,10 @@ export const signInWithGoogle = async () => {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
 
@@ -18,6 +23,28 @@ export const signInWithGoogle = async () => {
   } catch (error: any) {
     toast.error(error.message || "Google sign in failed");
     throw error;
+  }
+};
+
+// Handle Google OAuth callback and set profile picture
+export const handleGoogleAuthCallback = async () => {
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) throw error;
+
+    if (user) {
+      // Set Google profile picture if available
+      await setGoogleProfilePicture(user);
+    }
+
+    return user;
+  } catch (error: any) {
+    console.error("Error handling Google auth callback:", error);
+    // Don't throw error to avoid breaking the auth flow
   }
 };
 
@@ -52,6 +79,7 @@ export const signUpWithEmail = async (
       options: {
         data: {
           display_name: name,
+          full_name: name,
         },
       },
     });

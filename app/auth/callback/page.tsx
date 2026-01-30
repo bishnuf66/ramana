@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
 import { Suspense } from "react";
+import { handleGoogleAuthCallback } from "@/lib/supabase/auth";
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -22,8 +23,10 @@ function AuthCallbackContent() {
         }
 
         if (data.session) {
-          toast.success("Successfully signed in!");
+          // Handle Google profile picture if this is a Google sign-in
+          await handleGoogleAuthCallback();
 
+          toast.success("Successfully signed in!");
           router.push("/");
         } else {
           router.push("/login");
