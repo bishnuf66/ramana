@@ -268,30 +268,53 @@ export default function ProfileSetting({
 
       {/* Profile Picture Section */}
       <div className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-700">
+        <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
+          Profile Picture
+        </h4>
         <div className="flex items-center gap-6">
-          <ProfilePictureUpload
-            userId={user.id}
-            size="lg"
-            showUploadButton={true}
-            editable={editingProfile}
-            currentProfilePictureUrl={
-              user.profile_picture_url || user.avatar_url
-            }
-            onUploadSuccess={loadUserData}
-            className="flex-shrink-0"
-          />
+          {editingProfile ? (
+            <ProfilePictureEdit
+              currentPictureUrl={profilePictureUrl || undefined}
+              tempPicture={tempProfilePicture}
+              onPictureUpload={handleTempPictureUpload}
+              onPictureDelete={handleTempPictureDelete}
+              editable={true}
+              size="lg"
+              className="flex-shrink-0"
+            />
+          ) : (
+            <ProfilePictureUpload
+              userId={user.id}
+              size="lg"
+              showUploadButton={false}
+              editable={false}
+              currentProfilePictureUrl={profilePictureUrl || undefined}
+              className="flex-shrink-0"
+            />
+          )}
           <div className="flex-1">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               Upload a profile picture to personalize your account. Supported
               formats: JPG, PNG, GIF. Maximum size: 2MB.
             </p>
 
-            {!(user.profile_picture_url || user.avatar_url) &&
+            {(!profilePictureUrl || tempProfilePicture?.deleted) &&
               !profilePictureLoading && (
                 <p className="text-sm text-gray-500 dark:text-gray-500">
-                  No profile picture set. Click the camera icon to upload one.
+                  No profile picture set. Click "Edit Profile" to upload one.
                 </p>
               )}
+
+            {editingProfile && tempProfilePicture?.file && (
+              <p className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+                📸 New picture selected - Click "Save Changes" to apply
+              </p>
+            )}
+            {editingProfile && tempProfilePicture?.deleted && (
+              <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+                🗑️ Picture marked for deletion - Click "Save Changes" to confirm
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -355,7 +378,7 @@ export default function ProfileSetting({
             </button>
             <button
               type="button"
-              onClick={() => setEditingProfile(false)}
+              onClick={handleCancelEdit}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Cancel
