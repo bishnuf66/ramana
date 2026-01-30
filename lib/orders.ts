@@ -94,7 +94,11 @@ export function calculateOrderTotal(
   };
 }
 
-export async function uploadPaymentScreenshot(file: File): Promise<string> {
+export async function uploadPaymentScreenshot(
+  file: File,
+  userId?: string,
+  orderId?: string,
+): Promise<string> {
   try {
     // Validate file
     if (!file.type.startsWith("image/")) {
@@ -106,8 +110,18 @@ export async function uploadPaymentScreenshot(file: File): Promise<string> {
       throw new Error("File size must be less than 5MB");
     }
 
-    // Generate unique filename
-    const fileName = `payment-screenshots/${Date.now()}-${file.name}`;
+    // Generate unique filename with user and order folder structure
+    let fileName = `payment-screenshots/`;
+
+    if (userId) {
+      fileName += `user-${userId}/`;
+    }
+
+    if (orderId) {
+      fileName += `order-${orderId}/`;
+    }
+
+    fileName += `${Date.now()}-${file.name}`;
 
     // Upload to Supabase Storage (using existing product-images bucket)
     const { error: uploadError } = await supabase.storage
@@ -498,14 +512,6 @@ export async function createOrder(orderData: OrderData): Promise<any> {
     // Auto coupon logic removed - customers must manually enter and apply coupons
     let isFirstTimeCustomer = false;
 
-    // Upload payment screenshot if provided (required for all payment methods now)
-    let paymentScreenshotUrl = null;
-    if (orderData.payment_screenshot) {
-      paymentScreenshotUrl = await uploadPaymentScreenshot(
-        orderData.payment_screenshot,
-      );
-    }
-
     // Calculate order totals
     const orderTotals = calculateOrderTotal(
       orderData.total_amount,
@@ -561,6 +567,16 @@ export async function createOrder(orderData: OrderData): Promise<any> {
     }
 
     console.log("Order created successfully:", order.id);
+
+    // Upload payment screenshot now that we have the order ID
+    let paymentScreenshotUrl = null;
+    if (orderData.payment_screenshot) {
+      paymentScreenshotUrl = await uploadPaymentScreenshot(
+        orderData.payment_screenshot,
+        user?.id,
+        order.id,
+      );
+    }
 
     // Create payment record in user_payments table
     console.log("Creating payment record with payload:", {
