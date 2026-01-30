@@ -45,6 +45,7 @@ export default function ProfileSetting({
   const [editingProfile, setEditingProfile] = useState(false);
   const [changingEmail, setChangingEmail] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const {
     profilePictureUrl: hookProfilePictureUrl,
     loading: profilePictureLoading,
@@ -130,6 +131,8 @@ export default function ProfileSetting({
     e.preventDefault();
 
     try {
+      setSavingProfile(true);
+
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
@@ -181,6 +184,8 @@ export default function ProfileSetting({
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
+    } finally {
+      setSavingProfile(false);
     }
   };
 
@@ -268,9 +273,6 @@ export default function ProfileSetting({
 
       {/* Profile Picture Section */}
       <div className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-700">
-        <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
-          Profile Picture
-        </h4>
         <div className="flex items-center gap-6">
           {editingProfile ? (
             <ProfilePictureEdit
@@ -372,14 +374,23 @@ export default function ProfileSetting({
           <div className="flex gap-3">
             <button
               type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              disabled={savingProfile}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Save Changes
+              {savingProfile ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </button>
             <button
               type="button"
               onClick={handleCancelEdit}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              disabled={savingProfile}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
