@@ -84,7 +84,7 @@ export default function PaymentPage() {
   };
 
   const uploadPaymentScreenshot = async (file: File): Promise<string> => {
-    // Use the same organized folder structure as checkout page
+    // Use the dedicated payment-screenshots bucket with organized folder structure
     let fileName = `payment-screenshots/`;
 
     if (order.user_id) {
@@ -95,7 +95,7 @@ export default function PaymentPage() {
     fileName += `${Date.now()}-${file.name}`;
 
     const { data, error } = await supabase.storage
-      .from("product-images")
+      .from("payment-screenshots")
       .upload(fileName, file, {
         cacheControl: "3600",
         upsert: false,
@@ -105,7 +105,7 @@ export default function PaymentPage() {
 
     const {
       data: { publicUrl },
-    } = supabase.storage.from("product-images").getPublicUrl(fileName);
+    } = supabase.storage.from("payment-screenshots").getPublicUrl(fileName);
 
     return publicUrl;
   };

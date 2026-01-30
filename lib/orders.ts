@@ -123,9 +123,9 @@ export async function uploadPaymentScreenshot(
 
     fileName += `${Date.now()}-${file.name}`;
 
-    // Upload to Supabase Storage (using existing product-images bucket)
+    // Upload to dedicated payment-screenshots bucket
     const { error: uploadError } = await supabase.storage
-      .from("product-images")
+      .from("payment-screenshots")
       .upload(fileName, file, {
         cacheControl: "3600",
         upsert: false,
@@ -141,7 +141,7 @@ export async function uploadPaymentScreenshot(
     // Get public URL
     const {
       data: { publicUrl },
-    } = supabase.storage.from("product-images").getPublicUrl(fileName);
+    } = supabase.storage.from("payment-screenshots").getPublicUrl(fileName);
 
     return publicUrl;
   } catch (error) {
@@ -771,7 +771,85 @@ export async function withdrawCancellationRequest(
   }
 }
 
+export async function deletePaymentScreenshot(
+  screenshotUrl: string,
+): Promise<boolean> {
+  try {
+    // Extract the file path from the public URL
+    const url = new URL(screenshotUrl);
+    const pathParts = url.pathname.split("/object/public/payment-screenshots/");
+    const filePath = pathParts[1];
+
+    if (!filePath) {
+      throw new Error("Invalid screenshot URL format");
+    }
+
+    // Delete the file from storage
+    const { error } = await supabase.storage
+      .from("payment-screenshots")
+      .remove([filePath]);
+
+    if (error) {
+      console.error("Error deleting payment screenshot:", error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting payment screenshot:", error);
+    return false;
+  }
+}
+
+export async function deleteOrderPaymentScreenshots(
+  orderId: string,
+  userId?: string,
+): Promise<boolean> {
+  try {
+    // Construct the folder path to search for screenshots
+    let searchPath = `payment-screenshots/`;
+
+    if (userId) {
+      searchPath += `user-${userId}/`;
+    }
+
+    searchPath += `order-${orderId}/`;
+
+    // List all files in the order's payment screenshot folder
+    const { data: files, error: listError } = await supabase.storage
+      .from("payment-screenshots")
+      .list(searchPath);
+
+    if (listError) {
+      console.error("Error listing payment screenshots:", listError);
+      throw listError;
+    }
+
+    if (files && files.length > 0) {
+      // Construct full paths for all files
+      const filePaths = files.map((file) => `${searchPath}${file.name}`);
+
+      // Delete all files
+      const { error: deleteError } = await supabase.storage
+        .from("payment-screenshots")
+        .remove(filePaths);
+
+      if (deleteError) {
+        console.error("Error deleting payment screenshots:", deleteError);
+        throw deleteError;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting order payment screenshots:", error);
+    return false;
+  }
+}
+
 // Helper function to get welcome message for non-logged users
 export function getWelcomeMessage(): string {
   return "Sign up and get up to 30% off on your first order!";
 }
+
+// ... (rest of the code remains the same)
