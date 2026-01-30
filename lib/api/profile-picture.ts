@@ -2,7 +2,10 @@ import { supabase } from "@/lib/supabase/client";
 
 // Profile Picture API Functions
 
-export async function uploadProfilePicture(file: File, userId: string): Promise<string> {
+export async function uploadProfilePicture(
+  file: File,
+  userId: string,
+): Promise<string> {
   try {
     // Validate file
     if (!file.type.startsWith("image/")) {
@@ -14,8 +17,8 @@ export async function uploadProfilePicture(file: File, userId: string): Promise<
       throw new Error("Profile picture must be less than 2MB");
     }
 
-    // Generate unique filename
-    const fileName = `profile-pictures/user-${userId}/${Date.now()}-${file.name}`;
+    // Generate unique filename with direct user_id folder
+    const fileName = `${userId}/${Date.now()}-${file.name}`;
 
     // Upload to profile-pictures bucket
     const { error: uploadError } = await supabase.storage
@@ -32,22 +35,27 @@ export async function uploadProfilePicture(file: File, userId: string): Promise<
       );
     }
 
-    // Get public URL
+    // Get public URL (for private bucket, this still works with proper policies)
     const {
       data: { publicUrl },
     } = supabase.storage.from("profile-pictures").getPublicUrl(fileName);
 
+    console.log("Profile picture uploaded:", fileName);
+    console.log("Public URL:", publicUrl);
+
     // Update user metadata with profile picture URL
     const { error: updateError } = await supabase.auth.updateUser({
-      data: { 
+      data: {
         profile_picture_url: publicUrl,
-        profile_picture_path: fileName 
-      }
+        profile_picture_path: fileName,
+      },
     });
 
     if (updateError) {
       console.error("Error updating user metadata:", updateError);
       // Don't throw error, just log it since upload was successful
+    } else {
+      console.log("User metadata updated successfully");
     }
 
     return publicUrl;
@@ -60,8 +68,10 @@ export async function uploadProfilePicture(file: File, userId: string): Promise<
 export async function deleteProfilePicture(userId: string): Promise<boolean> {
   try {
     // Get current user metadata to find profile picture path
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user || !user.user_metadata?.profile_picture_path) {
       throw new Error("No profile picture found to delete");
     }
@@ -80,15 +90,17 @@ export async function deleteProfilePicture(userId: string): Promise<boolean> {
 
     // Update user metadata to remove profile picture
     const { error: updateError } = await supabase.auth.updateUser({
-      data: { 
+      data: {
         profile_picture_url: null,
-        profile_picture_path: null 
-      }
+        profile_picture_path: null,
+      },
     });
 
     if (updateError) {
       console.error("Error updating user metadata:", updateError);
       // Don't throw error, just log it since deletion was successful
+    } else {
+      console.log("Profile picture deleted successfully");
     }
 
     return true;
@@ -98,10 +110,14 @@ export async function deleteProfilePicture(userId: string): Promise<boolean> {
   }
 }
 
-export async function getUserProfilePicture(userId: string): Promise<string | null> {
+export async function getUserProfilePicture(
+  userId: string,
+): Promise<string | null> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (user?.user_metadata?.profile_picture_url) {
       return user.user_metadata.profile_picture_url;
     }
@@ -113,17 +129,47 @@ export async function getUserProfilePicture(userId: string): Promise<string | nu
   }
 }
 
+export async function clearOldProfilePictureMetadata(): Promise<void> {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Check if user has old double-path metadata
+    const metadata = user.user_metadata;
+    if (
+      metadata?.profile_picture_path?.includes(
+        "profile-pictures/profile-pictures/",
+      )
+    ) {
+      console.log("Clearing old double-path metadata");
+
+      // Clear the old metadata
+      await supabase.auth.updateUser({
+        data: {
+          profile_picture_url: null,
+          profile_picture_path: null,
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error clearing old metadata:", error);
+  }
+}
+
 export async function setGoogleProfilePicture(user: any): Promise<void> {
   try {
     if (user?.user_metadata?.avatar_url || user?.user_metadata?.picture) {
-      const profilePictureUrl = user.user_metadata.avatar_url || user.user_metadata.picture;
-      
+      const profilePictureUrl =
+        user.user_metadata.avatar_url || user.user_metadata.picture;
+
       // Update user metadata with Google profile picture
       await supabase.auth.updateUser({
-        data: { 
+        data: {
           profile_picture_url: profilePictureUrl,
-          profile_picture_source: 'google'
-        }
+          profile_picture_source: "google",
+        },
       });
     }
   } catch (error) {

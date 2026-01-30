@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   User,
@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase/client";
 import { toast } from "react-toastify";
 import ProfilePictureUpload from "./ProfilePictureUpload";
 import { useCurrentUserProfilePicture } from "@/hooks/useProfilePicture";
+import { clearOldProfilePictureMetadata } from "@/lib/api/profile-picture";
 
 interface UserProfile {
   id: string;
@@ -48,6 +49,14 @@ export default function ProfileSetting({
   const profilePictureUrl =
     user.profile_picture_url || user.avatar_url || hookProfilePictureUrl;
 
+  // Debug logging
+  console.log("Profile picture URLs:", {
+    user_profile_picture_url: user.profile_picture_url,
+    user_avatar_url: user.avatar_url,
+    hookProfilePictureUrl,
+    finalProfilePictureUrl: profilePictureUrl,
+  });
+
   const [profileForm, setProfileForm] = useState({
     full_name: user.full_name || "",
     phone: user.phone || "",
@@ -62,6 +71,11 @@ export default function ProfileSetting({
     newPassword: "",
     confirmPassword: "",
   });
+
+  // Clear old metadata with double paths when component mounts
+  useEffect(() => {
+    clearOldProfilePictureMetadata();
+  }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,6 +207,7 @@ export default function ProfileSetting({
             currentProfilePictureUrl={
               user.profile_picture_url || user.avatar_url
             }
+            onUploadSuccess={loadUserData}
             className="flex-shrink-0"
           />
           <div className="flex-1">

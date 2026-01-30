@@ -12,6 +12,7 @@ interface ProfilePictureUploadProps {
   showUploadButton?: boolean;
   editable?: boolean;
   currentProfilePictureUrl?: string;
+  onUploadSuccess?: () => void;
 }
 
 export default function ProfilePictureUpload({
@@ -21,6 +22,7 @@ export default function ProfilePictureUpload({
   showUploadButton = true,
   editable = true,
   currentProfilePictureUrl,
+  onUploadSuccess,
 }: ProfilePictureUploadProps) {
   const {
     profilePictureUrl: hookProfilePictureUrl,
@@ -49,8 +51,18 @@ export default function ProfilePictureUpload({
     // Clear any previous errors
     clearError();
 
-    // Upload the file
-    await uploadPicture(file);
+    try {
+      // Upload the file
+      await uploadPicture(file);
+
+      // Call success callback to refresh user data
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      // Error handling is done in the hook
+    }
   };
 
   const handleDeletePicture = async () => {
